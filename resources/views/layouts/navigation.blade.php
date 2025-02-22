@@ -18,6 +18,9 @@
                     <x-nav-link :href="route('locations.index')" :active="request()->routeIs('locations.*')">
                         {{ __('存放地点') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                        {{ __('分类管理') }}
+                    </x-nav-link>
                 </div>
             </div>
 

@@ -4,6 +4,7 @@ use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\CategoryController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ItemController::class, 'plaza'])->name('plaza');
@@ -22,6 +23,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');
     Route::post('/locations', [LocationController::class, 'store'])->name('locations.store');
+
+    Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
+    Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
+    Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
 });
 
 // 公开的物品路由
