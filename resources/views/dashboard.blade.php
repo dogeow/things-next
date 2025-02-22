@@ -45,8 +45,8 @@
 
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700">物品图片</label>
-                                <div class="mt-2 grid grid-cols-3 gap-4" id="imagePreviewGrid">
-                                    <label class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer">
+                                <div class="mt-2 grid grid-cols-6 gap-4" id="imagePreviewGrid">
+                                    <label class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer w-[120px] h-[120px] flex flex-col items-center justify-center">
                                         <input type="file" 
                                             name="images[]" 
                                             id="images"
@@ -55,11 +55,11 @@
                                             class="hidden"
                                             onchange="handleImageSelect(this)">
                                         <div class="space-y-1">
-                                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <svg class="mx-auto h-8 w-8 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
                                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                             </svg>
                                             <div class="text-sm text-gray-600">
-                                                点击上传图片
+                                                点击上传
                                             </div>
                                         </div>
                                     </label>
@@ -143,7 +143,7 @@ function handleImageSelect(input) {
         const reader = new FileReader();
         reader.onload = function(e) {
             const preview = document.createElement('div');
-            preview.className = 'relative border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer image-preview';
+            preview.className = 'relative border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer image-preview w-[120px] h-[120px]';
             
             // 使用累积的文件计数作为索引
             const currentIndex = fileCount;
@@ -178,14 +178,14 @@ function handleImageSelect(input) {
             };
 
             preview.innerHTML = `
-                <div class="aspect-w-1 aspect-h-1">
+                <div class="w-full h-full">
                     <img src="${e.target.result}" class="w-full h-full object-cover" alt="预览图片">
                 </div>
-                <div class="absolute top-2 right-2 bg-white rounded-full p-1 shadow flex gap-2">
+                <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1">
                     ${currentIndex === parseInt(document.getElementById('primaryImage').value) ? 
-                        '<span class="text-blue-500">主图</span>' : ''}
+                        '<span class="text-blue-500 text-xs">主图</span>' : ''}
                     <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${currentIndex}, this.parentElement.parentElement)">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
