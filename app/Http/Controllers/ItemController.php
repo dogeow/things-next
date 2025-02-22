@@ -6,6 +6,7 @@ use App\Models\Item;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 
 class ItemController extends Controller
 {
@@ -24,48 +25,136 @@ class ItemController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'quantity' => 'required|integer|min:1',
-            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-            'primary_image' => 'required|integer|min:0'
-        ]);
+        try {
+            // 添加更详细的调试日志
+            \Log::info('开始处理图片上传', [
+                'has_files' => $request->hasFile('images'),
+                'files_data' => $request->file('images'),
+                'files_count' => $request->hasFile('images') ? count($request->file('images')) : 0,
+                'request_all' => $request->all(),
+                'content_type' => $request->header('Content-Type'),
+                'request_files' => $_FILES, // 原始文件数据
+                'request_headers' => $request->headers->all(), // 所有请求头
+            ]);
 
-        $item = $request->user()->items()->create([
-            'name' => $validated['name'],
-            'description' => $validated['description'],
-            'quantity' => $validated['quantity'],
-        ]);
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'quantity' => 'required|integer|min:1',
+                'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+                'primary_image' => 'required|integer|min:0'
+            ]);
 
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $index => $image) {
-                try {
-                    // 直接使用 public disk 存储图片
-                    $path = $image->store('items', 'public');
-                    
-                    // 验证文件是否成功保存
-                    if (!Storage::disk('public')->exists($path)) {
-                        throw new \Exception('文件保存失败');
-                    }
+            \DB::beginTransaction(); // 开始事务
 
-                    $item->images()->create([
-                        'path' => $path,
-                        'is_primary' => $index == $request->primary_image,
-                        'sort_order' => $index
+            try {
+                $item = $request->user()->items()->create([
+                    'name' => $validated['name'],
+                    'description' => $validated['description'],
+                    'quantity' => $validated['quantity'],
+                ]);
+
+                \Log::info('物品创建成功', ['item_id' => $item->id]);
+
+                if ($request->hasFile('images')) {
+                    $images = $request->file('images');
+                    $primaryIndex = (int) $request->input('primary_image', 0);
+
+                    \Log::info('处理图片数组', [
+                        'images_count' => count($images),
+                        'primary_index' => $primaryIndex
                     ]);
-                } catch (\Exception $e) {
-                    // 记录错误
-                    \Log::error('图片上传失败: ' . $e->getMessage());
-                    return redirect()->back()
-                        ->withInput()
-                        ->withErrors(['images' => '图片上传失败，请重试']);
-                }
-            }
-        }
 
-        return redirect()->route('dashboard')
-            ->with('success', '物品创建成功！');
+                    foreach ($images as $index => $image) {
+                        // 生成唯一的文件名
+                        $filename = uniqid('item_') . '.' . $image->getClientOriginalExtension();
+                        
+                        // 存储图片
+                        $path = $image->storeAs('items', $filename, 'public');
+                        
+                        \Log::info('准备保存图片记录', [
+                            'index' => $index,
+                            'path' => $path,
+                            'is_primary' => $index == $primaryIndex,
+                            'item_id' => $item->id
+                        ]);
+
+                        // 验证文件是否成功保存
+                        if (!Storage::disk('public')->exists($path)) {
+                            throw new \Exception("文件 {$path} 保存失败");
+                        }
+
+                        // 直接使用 DB 查询构建器来创建记录，以便捕获任何SQL错误
+                        $imageRecord = \DB::table('item_images')->insert([
+                            'item_id' => $item->id,
+                            'path' => $path,
+                            'is_primary' => $index == $primaryIndex,
+                            'sort_order' => $index,
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ]);
+
+                        \Log::info('图片记录创建结果', [
+                            'success' => $imageRecord,
+                            'path' => $path
+                        ]);
+                    }
+                }
+
+                \DB::commit(); // 提交事务
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => true,
+                        'redirect' => route('dashboard'),
+                        'message' => '物品创建成功！'
+                    ]);
+                }
+
+                return redirect()->route('dashboard')
+                    ->with('success', '物品创建成功！');
+
+            } catch (\Exception $e) {
+                \DB::rollBack(); // 回滚事务
+                \Log::error('数据库操作失败', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+                
+                // 删除已上传的图片
+                if (isset($path)) {
+                    Storage::disk('public')->delete($path);
+                }
+
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => $e->getMessage()
+                    ], 422);
+                }
+
+                return redirect()->back()
+                    ->withInput()
+                    ->withErrors(['general' => $e->getMessage()]);
+            }
+
+        } catch (\Exception $e) {
+            \Log::error('整体处理失败', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage()
+                ], 422);
+            }
+
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['general' => $e->getMessage()]);
+        }
     }
 
     public function edit(Item $item)

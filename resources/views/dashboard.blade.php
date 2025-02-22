@@ -47,7 +47,11 @@
                                 <label class="block text-sm font-medium text-gray-700">物品图片</label>
                                 <div class="mt-2 grid grid-cols-3 gap-4" id="imagePreviewGrid">
                                     <label class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                                        <input type="file" name="images[]" multiple accept="image/*" 
+                                        <input type="file" 
+                                            name="images[]" 
+                                            id="images"
+                                            multiple 
+                                            accept="image/*" 
                                             class="hidden"
                                             onchange="handleImageSelect(this)">
                                         <div class="space-y-1">
@@ -62,6 +66,7 @@
                                 </div>
                                 <input type="hidden" name="primary_image" id="primaryImage" value="0">
                                 <p class="mt-2 text-sm text-gray-500">点击图片设置为主图</p>
+                                <div id="imageError" class="mt-2 text-sm text-red-600 hidden"></div>
                             </div>
                         </div>
 
@@ -122,3 +127,128 @@
         </div>
     </div>
 </x-app-layout>
+
+<script>
+// 创建一个数组来存储已上传的文件
+let uploadedFiles = [];
+let fileCount = 0;
+
+function handleImageSelect(input) {
+    const files = input.files;
+    const previewGrid = document.getElementById('imagePreviewGrid');
+    const uploadLabel = previewGrid.querySelector('label');
+    
+    // 处理每个选择的文件
+    Array.from(files).forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.createElement('div');
+            preview.className = 'relative border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer image-preview';
+            
+            // 使用累积的文件计数作为索引
+            const currentIndex = fileCount;
+            preview.setAttribute('data-index', currentIndex);
+            
+            // 创建隐藏的文件输入
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'file';
+            hiddenInput.name = `images[]`;
+            hiddenInput.classList.add('hidden');
+            hiddenInput.id = `image-${currentIndex}`;
+            
+            // 创建新的 DataTransfer 对象并添加文件
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            hiddenInput.files = dataTransfer.files;
+            
+            // 存储文件信息
+            uploadedFiles.push({
+                index: currentIndex,
+                input: hiddenInput
+            });
+            
+            fileCount++;
+            
+            preview.onclick = function() {
+                document.getElementById('primaryImage').value = currentIndex;
+                document.querySelectorAll('.image-preview').forEach(p => {
+                    p.classList.remove('ring-2', 'ring-blue-500');
+                });
+                preview.classList.add('ring-2', 'ring-blue-500');
+            };
+
+            preview.innerHTML = `
+                <div class="aspect-w-1 aspect-h-1">
+                    <img src="${e.target.result}" class="w-full h-full object-cover" alt="预览图片">
+                </div>
+                <div class="absolute top-2 right-2 bg-white rounded-full p-1 shadow flex gap-2">
+                    ${currentIndex === parseInt(document.getElementById('primaryImage').value) ? 
+                        '<span class="text-blue-500">主图</span>' : ''}
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${currentIndex}, this.parentElement.parentElement)">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+            
+            // 添加隐藏的文件输入
+            preview.appendChild(hiddenInput);
+            
+            // 将新的预览插入到上传按钮之前
+            previewGrid.insertBefore(preview, uploadLabel);
+
+            // 如果是第一张图片，自动设置为主图
+            if (fileCount === 1) {
+                document.getElementById('primaryImage').value = 0;
+                preview.classList.add('ring-2', 'ring-blue-500');
+            }
+        };
+        reader.readAsDataURL(file);
+    });
+
+    // 清空 input，这样可以重复选择相同的文件
+    input.value = '';
+}
+
+// 删除图片的函数
+function removeImage(index, previewElement) {
+    // 从数组中移除文件
+    uploadedFiles = uploadedFiles.filter(file => file.index !== index);
+    fileCount--;
+    
+    // 移除预览元素
+    previewElement.remove();
+    
+    // 更新其他预览元素的索引
+    document.querySelectorAll('.image-preview').forEach((preview, newIndex) => {
+        preview.setAttribute('data-index', newIndex);
+    });
+    
+    // 如果删除的是主图，将第一张图片设为主图
+    const primaryImageIndex = parseInt(document.getElementById('primaryImage').value);
+    if (primaryImageIndex === index) {
+        const firstPreview = document.querySelector('.image-preview');
+        if (firstPreview) {
+            document.getElementById('primaryImage').value = firstPreview.getAttribute('data-index');
+            firstPreview.classList.add('ring-2', 'ring-blue-500');
+        } else {
+            document.getElementById('primaryImage').value = 0;
+        }
+    }
+}
+
+// 表单提交前的验证
+document.querySelector('form').addEventListener('submit', function(e) {
+    const errorDiv = document.getElementById('imageError');
+    errorDiv.classList.add('hidden');
+    errorDiv.textContent = '';
+    
+    if (fileCount === 0) {
+        e.preventDefault();
+        errorDiv.textContent = '请至少上传一张图片';
+        errorDiv.classList.remove('hidden');
+        return false;
+    }
+});
+</script>
