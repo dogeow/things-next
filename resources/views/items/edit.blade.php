@@ -148,14 +148,37 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description', $item->description) }}</textarea>
                             </div>
 
-                            <!-- 图片管理部分保持原样 -->
+                            <!-- 图片管理部分 -->
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700">物品图片 <span class="text-red-500">*</span></label>
-                                <div class="mt-2 grid grid-cols-6 gap-4" id="imagePreviewGrid">
+                                <label class="block text-sm font-medium text-gray-700">物品图片</label>
+                                
+                                <!-- 现有图片显示 -->
+                                <div class="mt-2 grid grid-cols-6 gap-4" id="existingImages">
+                                    @foreach($item->images as $image)
+                                        <div class="relative border-2 {{ $image->is_primary ? 'border-blue-500' : 'border-gray-300' }} rounded-lg overflow-hidden" data-image-id="{{ $image->id }}">
+                                            <img src="{{ asset('storage/' . $image->path) }}" 
+                                                class="w-full h-24 object-cover" 
+                                                alt="{{ $item->name }}">
+                                            <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1">
+                                                @if($image->is_primary)
+                                                    <span class="text-blue-500 text-xs">主图</span>
+                                                @endif
+                                                <button type="button" 
+                                                    class="delete-image-btn text-red-500 hover:text-red-700">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    @endforeach
+                                </div>
+
+                                <!-- 新图片上传 -->
+                                <div class="mt-4 grid grid-cols-6 gap-4" id="imagePreviewGrid">
                                     <label class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer w-[120px] h-[120px] flex flex-col items-center justify-center">
                                         <input type="file" 
                                             name="images[]" 
-                                            id="images"
                                             multiple 
                                             accept="image/*" 
                                             class="hidden"
@@ -165,7 +188,7 @@
                                                 <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                             </svg>
                                             <div class="text-sm text-gray-600">
-                                                点击上传
+                                                添加图片
                                             </div>
                                         </div>
                                     </label>
