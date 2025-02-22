@@ -76,8 +76,9 @@
                                     </select>
                                     <input type="text" id="new_category" name="new_category" 
                                         class="hidden rounded-r-md block w-full border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="输入新分类">
+                                        placeholder="输入新分类名称">
                                 </div>
+                                <p class="mt-1 text-sm text-gray-500">选择已有分类或输入新分类名称</p>
                             </div>
 
                             <div class="md:col-span-2">
@@ -122,22 +123,22 @@
                 </div>
             </div>
 
-            <!-- 我的物品列表 -->
+            <!-- 物品列表部分 -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 border-b border-gray-200">
+                <div class="p-6">
                     <h3 class="text-lg font-semibold mb-4">我的物品</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        @forelse(Auth::user()->items as $item)
-                            <div class="flex border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        @forelse($items as $item)
+                            <div class="border rounded-lg overflow-hidden flex">
                                 <!-- 左侧图片 -->
-                                <div class="w-1/3 relative">
+                                <div class="w-1/3">
                                     @if($item->primaryImage)
-                                        <img src="{{ asset('storage/' . $item->primaryImage->path) }}"
-                                             alt="{{ $item->name }}" 
-                                             class="w-full h-full object-cover">
+                                        <img src="{{ asset('storage/' . $item->primaryImage->path) }}" 
+                                            alt="{{ $item->name }}" 
+                                            class="w-full h-full object-cover">
                                     @else
                                         <div class="w-full h-full bg-gray-100 flex items-center justify-center">
-                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg class="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
@@ -148,6 +149,12 @@
                                 <div class="w-2/3 p-4">
                                     <a href="{{ route('items.show', $item) }}" class="block">
                                         <h4 class="text-lg font-semibold">{{ $item->name }}</h4>
+                                        <!-- 分类信息 -->
+                                        @if($item->category)
+                                            <div class="text-sm text-gray-500 mt-1">
+                                                分类: {{ $item->category->name }}
+                                            </div>
+                                        @endif
                                         <div class="text-sm text-gray-500 mt-1">数量: {{ $item->quantity }}</div>
                                         @if($item->expiry_date)
                                             <div class="text-sm {{ strtotime($item->expiry_date) < time() ? 'text-red-500' : 'text-gray-500' }} mt-1">
@@ -158,7 +165,7 @@
                                             </div>
                                         @endif
                                     </a>
-                                    <div class="mt-2 flex justify-end">
+                                    <div class="mt-2 flex justify-end space-x-2">
                                         <a href="{{ route('items.edit', $item) }}" 
                                             class="text-blue-600 hover:text-blue-800 text-sm">
                                             编辑
@@ -171,6 +178,11 @@
                                 还没有添加任何物品
                             </div>
                         @endforelse
+                    </div>
+
+                    <!-- 分页链接 -->
+                    <div class="mt-6">
+                        {{ $items->links() }}
                     </div>
                 </div>
             </div>
@@ -215,7 +227,7 @@ function handleImageSelect(input) {
             
             fileCount++;
 
-            // 检查是否是第一张图片（在所有预览中）
+            // 检查是否是第一张图片
             const isFirstImage = document.querySelectorAll('.image-preview').length === 0;
             
             preview.innerHTML = `
@@ -262,7 +274,7 @@ function removeImage(index, previewElement) {
     previews.forEach((preview, newIndex) => {
         preview.setAttribute('data-index', newIndex);
         
-        // 更新主图标识 - 始终让第一张图片作为主图
+        // 更新主图标识
         const tagContainer = preview.querySelector('.tag-container');
         const isFirstImage = newIndex === 0;
         
@@ -314,6 +326,7 @@ document.getElementById('category_select').addEventListener('change', function()
     } else {
         newCategoryInput.classList.add('hidden');
         this.classList.remove('rounded-r-none');
+        newCategoryInput.value = ''; // 清空输入
     }
 });
 </script>
