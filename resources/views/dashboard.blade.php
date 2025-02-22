@@ -248,12 +248,14 @@ function handleImageSelect(input) {
     const previewGrid = document.getElementById('imagePreviewGrid');
     const uploadLabel = previewGrid.querySelector('label');
     
+    // 处理每个选择的文件
     Array.from(files).forEach((file, index) => {
         const reader = new FileReader();
         reader.onload = function(e) {
             const preview = document.createElement('div');
             preview.className = 'relative border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer image-preview w-[120px] h-[120px]';
             
+            // 使用累积的文件计数作为索引
             const currentIndex = fileCount;
             preview.setAttribute('data-index', currentIndex);
             
@@ -264,26 +266,34 @@ function handleImageSelect(input) {
             hiddenInput.classList.add('hidden');
             hiddenInput.id = `image-${currentIndex}`;
             
+            // 创建新的 DataTransfer 对象并添加文件
             const dataTransfer = new DataTransfer();
             dataTransfer.items.add(file);
             hiddenInput.files = dataTransfer.files;
             
+            // 存储文件信息
             uploadedFiles.push({
                 index: currentIndex,
                 input: hiddenInput
             });
             
             fileCount++;
-
-            // 检查是否是第一张图片
-            const isFirstImage = document.querySelectorAll('.image-preview').length === 0;
             
+            preview.onclick = function() {
+                document.getElementById('primaryImage').value = currentIndex;
+                document.querySelectorAll('.image-preview').forEach(p => {
+                    p.classList.remove('ring-2', 'ring-blue-500');
+                });
+                preview.classList.add('ring-2', 'ring-blue-500');
+            };
+
             preview.innerHTML = `
                 <div class="w-full h-full">
                     <img src="${e.target.result}" class="w-full h-full object-cover" alt="预览图片">
                 </div>
-                <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1 tag-container">
-                    ${isFirstImage ? '<span class="text-blue-500 text-xs main-tag">主图</span>' : ''}
+                <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1">
+                    ${currentIndex === parseInt(document.getElementById('primaryImage').value) ? 
+                        '<span class="text-blue-500 text-xs">主图</span>' : ''}
                     <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${currentIndex}, this.parentElement.parentElement)">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
@@ -292,11 +302,14 @@ function handleImageSelect(input) {
                 </div>
             `;
             
+            // 添加隐藏的文件输入
             preview.appendChild(hiddenInput);
+            
+            // 将新的预览插入到上传按钮之前
             previewGrid.insertBefore(preview, uploadLabel);
 
-            // 如果是第一张图片，添加选中状态
-            if (isFirstImage) {
+            // 如果是第一张图片，自动设置为主图
+            if (fileCount === 1) {
                 document.getElementById('primaryImage').value = 0;
                 preview.classList.add('ring-2', 'ring-blue-500');
             }
@@ -304,51 +317,34 @@ function handleImageSelect(input) {
         reader.readAsDataURL(file);
     });
 
+    // 清空 input，这样可以重复选择相同的文件
     input.value = '';
 }
 
 // 删除图片的函数
 function removeImage(index, previewElement) {
-    event.stopPropagation();
-    
+    // 从数组中移除文件
     uploadedFiles = uploadedFiles.filter(file => file.index !== index);
     fileCount--;
     
-    // 移除当前预览元素
+    // 移除预览元素
     previewElement.remove();
     
-    // 更新所有预览元素的索引和主图状态
-    const previews = document.querySelectorAll('.image-preview');
-    previews.forEach((preview, newIndex) => {
+    // 更新其他预览元素的索引
+    document.querySelectorAll('.image-preview').forEach((preview, newIndex) => {
         preview.setAttribute('data-index', newIndex);
-        
-        // 更新主图标识
-        const tagContainer = preview.querySelector('.tag-container');
-        const isFirstImage = newIndex === 0;
-        
-        if (tagContainer) {
-            tagContainer.innerHTML = `
-                ${isFirstImage ? '<span class="text-blue-500 text-xs main-tag">主图</span>' : ''}
-                <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${newIndex}, this.parentElement.parentElement)">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            `;
-        }
-        
-        // 更新选中状态
-        if (isFirstImage) {
-            preview.classList.add('ring-2', 'ring-blue-500');
-            document.getElementById('primaryImage').value = newIndex;
-        } else {
-            preview.classList.remove('ring-2', 'ring-blue-500');
-        }
     });
     
-    // 如果没有图片了，重置主图索引
-    if (previews.length === 0) {
-        document.getElementById('primaryImage').value = 0;
+    // 如果删除的是主图，将第一张图片设为主图
+    const primaryImageIndex = parseInt(document.getElementById('primaryImage').value);
+    if (primaryImageIndex === index) {
+        const firstPreview = document.querySelector('.image-preview');
+        if (firstPreview) {
+            document.getElementById('primaryImage').value = firstPreview.getAttribute('data-index');
+            firstPreview.classList.add('ring-2', 'ring-blue-500');
+        } else {
+            document.getElementById('primaryImage').value = 0;
+        }
     }
 }
 
