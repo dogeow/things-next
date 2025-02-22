@@ -121,4 +121,9 @@ class ItemController extends Controller
         $item->delete();
         return redirect()->route('dashboard')->with('success', '物品已删除！');
     }
+
+    public function show(Item $item)
+    {
+        return view('items.show', compact('item'));
+    }
 } 

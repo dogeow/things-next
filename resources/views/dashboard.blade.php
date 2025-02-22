@@ -81,34 +81,33 @@
                     <h3 class="text-lg font-semibold mb-4">我的物品</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         @forelse(Auth::user()->items as $item)
-                            <div class="border rounded-lg p-4 flex flex-col h-full">
-                                <div class="flex gap-4">
-                                    <!-- 物品图片 -->
-                                    <div class="w-24 h-24 flex-shrink-0">
-                                        @if($item->primaryImage)
-                                            <img src="{{ asset('storage/' . $item->primaryImage->path) }}"
-                                                 alt="{{ $item->name }}" 
-                                                 class="w-full h-full object-cover rounded-lg">
-                                        @else
-                                            <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
-                                                <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </div>
-                                        @endif
-                                    </div>
-
-                                    <!-- 物品信息 -->
-                                    <div class="flex-1 min-w-0 flex flex-col">
-                                        <h4 class="text-lg font-semibold truncate">{{ $item->name }}</h4>
-                                        <p class="text-gray-600 mt-1 text-sm line-clamp-2">{{ $item->description }}</p>
-                                        <div class="mt-auto pt-2 flex items-center justify-between">
-                                            <span class="text-sm text-gray-500">数量: {{ $item->quantity }}</span>
-                                            <a href="{{ route('items.edit', $item) }}" 
-                                               class="text-blue-600 hover:text-blue-800 text-sm ml-4">
-                                                编辑
-                                            </a>
+                            <div class="flex border rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
+                                <!-- 左侧图片 -->
+                                <div class="w-1/3 relative">
+                                    @if($item->primaryImage)
+                                        <img src="{{ asset('storage/' . $item->primaryImage->path) }}"
+                                             alt="{{ $item->name }}" 
+                                             class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full bg-gray-100 flex items-center justify-center">
+                                            <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
                                         </div>
+                                    @endif
+                                </div>
+
+                                <!-- 右侧信息 -->
+                                <div class="w-2/3 p-4">
+                                    <a href="{{ route('items.show', $item) }}" class="block">
+                                        <h4 class="text-lg font-semibold">{{ $item->name }}</h4>
+                                        <div class="text-sm text-gray-500 mt-1">数量: {{ $item->quantity }}</div>
+                                    </a>
+                                    <div class="mt-2 flex justify-end">
+                                        <a href="{{ route('items.edit', $item) }}" 
+                                            class="text-blue-600 hover:text-blue-800 text-sm">
+                                            编辑
+                                        </a>
                                     </div>
                                 </div>
                             </div>
