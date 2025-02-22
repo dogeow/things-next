@@ -9,6 +9,19 @@
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
+                    <!-- 添加消息提示 -->
+                    @if (session('success'))
+                        <div class="mb-4 bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    @if (session('error'))
+                        <div class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
+                            {{ session('error') }}
+                        </div>
+                    @endif
+
                     @if ($errors->any())
                         <div class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
                             <ul class="list-disc list-inside">
@@ -18,6 +31,12 @@
                             </ul>
                         </div>
                     @endif
+
+                    <!-- 在主表单之前添加一个隐藏的删除图片表单 -->
+                    <form id="deleteImageForm" method="POST" style="display: none;">
+                        @csrf
+                        @method('DELETE')
+                    </form>
 
                     <form action="{{ route('items.update', $item) }}" method="POST" enctype="multipart/form-data">
                         @csrf
@@ -152,7 +171,7 @@
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700">物品图片</label>
                                 
-                                <!-- 现有图片显示 -->
+                                <!-- 主表单内的图片显示 -->
                                 <div class="mt-2 grid grid-cols-6 gap-4" id="existingImages">
                                     @foreach($item->images as $image)
                                         <div class="relative border-2 {{ $image->is_primary ? 'border-blue-500' : 'border-gray-300' }} rounded-lg overflow-hidden">
@@ -162,21 +181,14 @@
                                             <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1">
                                                 @if($image->is_primary)
                                                     <span class="text-blue-500 text-xs">主图</span>
-
                                                 @endif
-                                                <form action="{{ route('items.images.destroy', $image->id) }}" 
-                                                    method="POST" 
-                                                    class="inline"
-                                                    onsubmit="return confirm('确定要删除这张图片吗？');">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" 
-                                                        class="text-red-500 hover:text-red-700">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
-                                                </form>
+                                                <button type="button" 
+                                                    onclick="deleteImage('{{ route('items.images.destroy', $image->id) }}')"
+                                                    class="text-red-500 hover:text-red-700">
+                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
                                     @endforeach
@@ -222,252 +234,258 @@
         </div>
     </div>
 
-    @push('scripts')
+
     <!-- ... 原有的脚本代码 ... -->
-    @endpush
-</x-app-layout>
+    <script>
+    // 创建一个数组来存储已上传的文件
+    let uploadedFiles = [];
+    let fileCount = 0;
 
-<script>
-// 创建一个数组来存储已上传的文件
-let uploadedFiles = [];
-let fileCount = 0;
+    function handleImageSelect(input) {
+        const files = input.files;
+        const previewGrid = document.getElementById('imagePreviewGrid');
+        const uploadLabel = previewGrid.querySelector('label');
+        
+        Array.from(files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const preview = document.createElement('div');
+                preview.className = 'relative border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer image-preview w-[120px] h-[120px]';
+                
+                const currentIndex = fileCount;
+                preview.setAttribute('data-index', currentIndex);
+                
+                // 创建隐藏的文件输入
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'file';
+                hiddenInput.name = `images[]`;
+                hiddenInput.classList.add('hidden');
+                hiddenInput.id = `image-${currentIndex}`;
+                
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(file);
+                hiddenInput.files = dataTransfer.files;
+                
+                uploadedFiles.push({
+                    index: currentIndex,
+                    input: hiddenInput
+                });
+                
+                fileCount++;
 
-function handleImageSelect(input) {
-    const files = input.files;
-    const previewGrid = document.getElementById('imagePreviewGrid');
-    const uploadLabel = previewGrid.querySelector('label');
-    
-    Array.from(files).forEach((file, index) => {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const preview = document.createElement('div');
-            preview.className = 'relative border-2 border-gray-300 rounded-lg overflow-hidden cursor-pointer image-preview w-[120px] h-[120px]';
-            
-            const currentIndex = fileCount;
-            preview.setAttribute('data-index', currentIndex);
-            
-            // 创建隐藏的文件输入
-            const hiddenInput = document.createElement('input');
-            hiddenInput.type = 'file';
-            hiddenInput.name = `images[]`;
-            hiddenInput.classList.add('hidden');
-            hiddenInput.id = `image-${currentIndex}`;
-            
-            const dataTransfer = new DataTransfer();
-            dataTransfer.items.add(file);
-            hiddenInput.files = dataTransfer.files;
-            
-            uploadedFiles.push({
-                index: currentIndex,
-                input: hiddenInput
-            });
-            
-            fileCount++;
+                // 检查是否是第一张图片
+                const isFirstImage = document.querySelectorAll('.image-preview').length === 0;
+                
+                preview.innerHTML = `
+                    <div class="w-full h-full">
+                        <img src="${e.target.result}" class="w-full h-full object-cover" alt="预览图片">
+                    </div>
+                    <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1 tag-container">
+                        ${isFirstImage ? '<span class="text-blue-500 text-xs main-tag">主图</span>' : ''}
+                        <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${currentIndex}, this.parentElement.parentElement)">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                
+                preview.appendChild(hiddenInput);
+                previewGrid.insertBefore(preview, uploadLabel);
 
-            // 检查是否是第一张图片
-            const isFirstImage = document.querySelectorAll('.image-preview').length === 0;
+                // 如果是第一张图片，添加选中状态
+                if (isFirstImage) {
+                    document.getElementById('primaryImage').value = 0;
+                    preview.classList.add('ring-2', 'ring-blue-500');
+                }
+            };
+            reader.readAsDataURL(file);
+        });
+
+        input.value = '';
+    }
+
+    // 删除图片的函数
+    function removeImage(index, previewElement) {
+        event.stopPropagation();
+        
+        uploadedFiles = uploadedFiles.filter(file => file.index !== index);
+        fileCount--;
+        
+        // 移除当前预览元素
+        previewElement.remove();
+        
+        // 更新所有预览元素的索引和主图状态
+        const previews = document.querySelectorAll('.image-preview');
+        previews.forEach((preview, newIndex) => {
+            preview.setAttribute('data-index', newIndex);
             
-            preview.innerHTML = `
-                <div class="w-full h-full">
-                    <img src="${e.target.result}" class="w-full h-full object-cover" alt="预览图片">
-                </div>
-                <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1 tag-container">
+            // 更新主图标识
+            const tagContainer = preview.querySelector('.tag-container');
+            const isFirstImage = newIndex === 0;
+            
+            if (tagContainer) {
+                tagContainer.innerHTML = `
                     ${isFirstImage ? '<span class="text-blue-500 text-xs main-tag">主图</span>' : ''}
-                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${currentIndex}, this.parentElement.parentElement)">
+                    <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${newIndex}, this.parentElement.parentElement)">
                         <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
-                </div>
-            `;
-            
-            preview.appendChild(hiddenInput);
-            previewGrid.insertBefore(preview, uploadLabel);
-
-            // 如果是第一张图片，添加选中状态
-            if (isFirstImage) {
-                document.getElementById('primaryImage').value = 0;
-                preview.classList.add('ring-2', 'ring-blue-500');
+                `;
             }
-        };
-        reader.readAsDataURL(file);
+            
+            // 更新选中状态
+            if (isFirstImage) {
+                preview.classList.add('ring-2', 'ring-blue-500');
+                document.getElementById('primaryImage').value = newIndex;
+            } else {
+                preview.classList.remove('ring-2', 'ring-blue-500');
+            }
+        });
+        
+        // 如果没有图片了，重置主图索引
+        if (previews.length === 0) {
+            document.getElementById('primaryImage').value = 0;
+        }
+    }
+
+    // 表单提交前的验证
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const errorDiv = document.getElementById('imageError');
+        errorDiv.classList.add('hidden');
+        errorDiv.textContent = '';
+        
+        if (fileCount === 0) {
+            e.preventDefault();
+            errorDiv.textContent = '请至少上传一张图片';
+            errorDiv.classList.remove('hidden');
+            return false;
+        }
     });
 
-    input.value = '';
-}
-
-// 删除图片的函数
-function removeImage(index, previewElement) {
-    event.stopPropagation();
-    
-    uploadedFiles = uploadedFiles.filter(file => file.index !== index);
-    fileCount--;
-    
-    // 移除当前预览元素
-    previewElement.remove();
-    
-    // 更新所有预览元素的索引和主图状态
-    const previews = document.querySelectorAll('.image-preview');
-    previews.forEach((preview, newIndex) => {
-        preview.setAttribute('data-index', newIndex);
+    document.getElementById('category').addEventListener('input', function(e) {
+        const input = e.target;
+        const datalist = document.getElementById('category-list');
+        const categoryIdInput = document.getElementById('category_id');
         
-        // 更新主图标识
-        const tagContainer = preview.querySelector('.tag-container');
-        const isFirstImage = newIndex === 0;
+        // 获取所有选项
+        const options = Array.from(datalist.options);
         
-        if (tagContainer) {
-            tagContainer.innerHTML = `
-                ${isFirstImage ? '<span class="text-blue-500 text-xs main-tag">主图</span>' : ''}
-                <button type="button" class="text-red-500 hover:text-red-700" onclick="removeImage(${newIndex}, this.parentElement.parentElement)">
-                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                </button>
-            `;
-        }
+        // 查找是否匹配已有分类
+        const matchingOption = options.find(option => option.value === input.value);
         
-        // 更新选中状态
-        if (isFirstImage) {
-            preview.classList.add('ring-2', 'ring-blue-500');
-            document.getElementById('primaryImage').value = newIndex;
+        if (matchingOption) {
+            // 如果匹配到已有分类，设置 category_id
+            categoryIdInput.value = matchingOption.dataset.id;
         } else {
-            preview.classList.remove('ring-2', 'ring-blue-500');
+            // 如果是新分类，清空 category_id
+            categoryIdInput.value = '';
         }
     });
-    
-    // 如果没有图片了，重置主图索引
-    if (previews.length === 0) {
-        document.getElementById('primaryImage').value = 0;
-    }
-}
 
-// 表单提交前的验证
-document.querySelector('form').addEventListener('submit', function(e) {
-    const errorDiv = document.getElementById('imageError');
-    errorDiv.classList.add('hidden');
-    errorDiv.textContent = '';
-    
-    if (fileCount === 0) {
-        e.preventDefault();
-        errorDiv.textContent = '请至少上传一张图片';
-        errorDiv.classList.remove('hidden');
-        return false;
-    }
-});
+    document.addEventListener('DOMContentLoaded', function() {
+        const areaInput = document.getElementById('area_input');
+        const roomInput = document.getElementById('room_input');
+        const spotInput = document.getElementById('spot_input');
+        const locationInput = document.getElementById('location_input');
+        const spotIdInput = document.getElementById('spot_id');
 
-document.getElementById('category').addEventListener('input', function(e) {
-    const input = e.target;
-    const datalist = document.getElementById('category-list');
-    const categoryIdInput = document.getElementById('category_id');
-    
-    // 获取所有选项
-    const options = Array.from(datalist.options);
-    
-    // 查找是否匹配已有分类
-    const matchingOption = options.find(option => option.value === input.value);
-    
-    if (matchingOption) {
-        // 如果匹配到已有分类，设置 category_id
-        categoryIdInput.value = matchingOption.dataset.id;
-    } else {
-        // 如果是新分类，清空 category_id
-        categoryIdInput.value = '';
-    }
-});
-
-document.addEventListener('DOMContentLoaded', function() {
-    const areaInput = document.getElementById('area_input');
-    const roomInput = document.getElementById('room_input');
-    const spotInput = document.getElementById('spot_input');
-    const locationInput = document.getElementById('location_input');
-    const spotIdInput = document.getElementById('spot_id');
-
-    // 存储所有地点数据
-    const locations = @json($locations);
-    
-    // 更新房间列表的函数
-    function updateRoomList(areaName) {
-        const area = locations.find(a => a.area === areaName);
-        const roomList = document.getElementById('room-list');
-        roomList.innerHTML = '';
+        // 存储所有地点数据
+        const locations = @json($locations);
         
-        if (area && area.rooms) {
-            area.rooms.forEach(room => {
-                const option = document.createElement('option');
-                option.value = room.name;
-                roomList.appendChild(option);
-            });
+        // 更新房间列表的函数
+        function updateRoomList(areaName) {
+            const area = locations.find(a => a.area === areaName);
+            const roomList = document.getElementById('room-list');
+            roomList.innerHTML = '';
+            
+            if (area && area.rooms) {
+                area.rooms.forEach(room => {
+                    const option = document.createElement('option');
+                    option.value = room.name;
+                    roomList.appendChild(option);
+                });
+            }
         }
-    }
 
-    // 更新位置列表的函数
-    function updateSpotList(areaName, roomName) {
-        const area = locations.find(a => a.area === areaName);
-        const room = area?.rooms?.find(r => r.name === roomName);
-        const spotList = document.getElementById('spot-list');
-        spotList.innerHTML = '';
-        
-        if (room && room.spots) {
-            room.spots.forEach(spot => {
-                const option = document.createElement('option');
-                option.value = spot.name;
-                option.setAttribute('data-id', spot.id);
-                spotList.appendChild(option);
-            });
+        // 更新位置列表的函数
+        function updateSpotList(areaName, roomName) {
+            const area = locations.find(a => a.area === areaName);
+            const room = area?.rooms?.find(r => r.name === roomName);
+            const spotList = document.getElementById('spot-list');
+            spotList.innerHTML = '';
+            
+            if (room && room.spots) {
+                room.spots.forEach(spot => {
+                    const option = document.createElement('option');
+                    option.value = spot.name;
+                    option.setAttribute('data-id', spot.id);
+                    spotList.appendChild(option);
+                });
+            }
         }
-    }
 
-    // 初始化地点选择
-    if (areaInput.value) {
-        updateRoomList(areaInput.value);
-        if (roomInput.value) {
-            updateSpotList(areaInput.value, roomInput.value);
+        // 初始化地点选择
+        if (areaInput.value) {
+            updateRoomList(areaInput.value);
+            if (roomInput.value) {
+                updateSpotList(areaInput.value, roomInput.value);
+            }
         }
-    }
 
-    // 区域输入事件监听
-    areaInput.addEventListener('change', function() {
-        updateRoomList(this.value);
-        roomInput.value = '';
-        spotInput.value = '';
-        spotIdInput.value = '';
-    });
-
-    areaInput.addEventListener('input', function() {
-        this.dispatchEvent(new Event('change'));
-    });
-
-    // 房间输入事件监听
-    roomInput.addEventListener('change', function() {
-        updateSpotList(areaInput.value, this.value);
-        spotInput.value = '';
-        spotIdInput.value = '';
-    });
-
-    roomInput.addEventListener('input', function() {
-        this.dispatchEvent(new Event('change'));
-    });
-
-    // 位置输入事件监听
-    spotInput.addEventListener('input', function() {
-        const area = locations.find(a => a.area === areaInput.value);
-        const room = area?.rooms?.find(r => r.name === roomInput.value);
-        const spot = room?.spots?.find(s => s.name === this.value);
-        
-        if (spot) {
-            spotIdInput.value = spot.id;
-        } else {
+        // 区域输入事件监听
+        areaInput.addEventListener('change', function() {
+            updateRoomList(this.value);
+            roomInput.value = '';
+            spotInput.value = '';
             spotIdInput.value = '';
-        }
-        locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
+        });
+
+        areaInput.addEventListener('input', function() {
+            this.dispatchEvent(new Event('change'));
+        });
+
+        // 房间输入事件监听
+        roomInput.addEventListener('change', function() {
+            updateSpotList(areaInput.value, this.value);
+            spotInput.value = '';
+            spotIdInput.value = '';
+        });
+
+        roomInput.addEventListener('input', function() {
+            this.dispatchEvent(new Event('change'));
+        });
+
+        // 位置输入事件监听
+        spotInput.addEventListener('input', function() {
+            const area = locations.find(a => a.area === areaInput.value);
+            const room = area?.rooms?.find(r => r.name === roomInput.value);
+            const spot = room?.spots?.find(s => s.name === this.value);
+            
+            if (spot) {
+                spotIdInput.value = spot.id;
+            } else {
+                spotIdInput.value = '';
+            }
+            locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
+        });
+
+        // 调试日志
+        console.log('Initial values:', {
+            area: areaInput.value,
+            room: roomInput.value,
+            spot: spotInput.value,
+            locations: locations
+        });
     });
 
-    // 调试日志
-    console.log('Initial values:', {
-        area: areaInput.value,
-        room: roomInput.value,
-        spot: spotInput.value,
-        locations: locations
-    });
-});
-</script>
+    function deleteImage(url) {
+        if (confirm('确定要删除这张图片吗？')) {
+            const form = document.getElementById('deleteImageForm');
+            form.action = url;
+            form.submit();
+        }
+    }
+    </script>
+</x-app-layout>
