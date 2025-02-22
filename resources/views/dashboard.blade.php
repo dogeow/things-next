@@ -395,38 +395,30 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // 存储所有地点数据
     const locations = @json($locations);
-
-    // 当区域输入变化时更新房间列表
-    areaInput.addEventListener('input', function() {
-        const area = locations.find(a => a.area === this.value);
+    
+    // 更新房间列表的函数
+    function updateRoomList(areaName) {
+        const area = locations.find(a => a.area === areaName);
         const roomList = document.getElementById('room-list');
         roomList.innerHTML = '';
         
-        if (area) {
+        if (area && area.rooms) {
             area.rooms.forEach(room => {
                 const option = document.createElement('option');
                 option.value = room.name;
                 roomList.appendChild(option);
             });
         }
+    }
 
-        // 清空房间和位置输入
-        if (this.value !== roomInput.getAttribute('data-last-valid')) {
-            roomInput.value = '';
-            spotInput.value = '';
-            spotIdInput.value = '';
-        }
-        roomInput.setAttribute('data-last-valid', this.value);
-    });
-
-    // 当房间输入变化时更新位置列表
-    roomInput.addEventListener('input', function() {
-        const area = locations.find(a => a.area === areaInput.value);
-        const room = area?.rooms.find(r => r.name === this.value);
+    // 更新位置列表的函数
+    function updateSpotList(areaName, roomName) {
+        const area = locations.find(a => a.area === areaName);
+        const room = area?.rooms?.find(r => r.name === roomName);
         const spotList = document.getElementById('spot-list');
         spotList.innerHTML = '';
         
-        if (room) {
+        if (room && room.spots) {
             room.spots.forEach(spot => {
                 const option = document.createElement('option');
                 option.value = spot.name;
@@ -434,39 +426,59 @@ document.addEventListener('DOMContentLoaded', function() {
                 spotList.appendChild(option);
             });
         }
+    }
 
-        // 清空位置输入
-        if (this.value !== spotInput.getAttribute('data-last-valid')) {
-            spotInput.value = '';
-            spotIdInput.value = '';
+    // 初始化地点选择
+    if (areaInput.value) {
+        updateRoomList(areaInput.value);
+        if (roomInput.value) {
+            updateSpotList(areaInput.value, roomInput.value);
         }
-        spotInput.setAttribute('data-last-valid', this.value);
+    }
+
+    // 区域输入事件监听
+    areaInput.addEventListener('change', function() {
+        updateRoomList(this.value);
+        roomInput.value = '';
+        spotInput.value = '';
+        spotIdInput.value = '';
     });
 
-    // 当位置输入变化时更新 spot_id
+    areaInput.addEventListener('input', function() {
+        this.dispatchEvent(new Event('change'));
+    });
+
+    // 房间输入事件监听
+    roomInput.addEventListener('change', function() {
+        updateSpotList(areaInput.value, this.value);
+        spotInput.value = '';
+        spotIdInput.value = '';
+    });
+
+    roomInput.addEventListener('input', function() {
+        this.dispatchEvent(new Event('change'));
+    });
+
+    // 位置输入事件监听
     spotInput.addEventListener('input', function() {
         const area = locations.find(a => a.area === areaInput.value);
-        const room = area?.rooms.find(r => r.name === roomInput.value);
-        const spot = room?.spots.find(s => s.name === this.value);
+        const room = area?.rooms?.find(r => r.name === roomInput.value);
+        const spot = room?.spots?.find(s => s.name === this.value);
         
         if (spot) {
-            // 如果选择了已有位置，设置 spot_id
             spotIdInput.value = spot.id;
-            locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
         } else {
-            // 如果是新位置，清空 spot_id
             spotIdInput.value = '';
-            locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
         }
+        locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
     });
 
-    // 表单提交前验证
-    document.querySelector('form').addEventListener('submit', function(e) {
-        if (!areaInput.value || !roomInput.value || !spotInput.value) {
-            e.preventDefault();
-            alert('请填写完整的地点信息');
-            return false;
-        }
+    // 调试日志
+    console.log('Initial values:', {
+        area: areaInput.value,
+        room: roomInput.value,
+        spot: spotInput.value,
+        locations: locations
     });
 });
 </script>

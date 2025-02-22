@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Area;
 use App\Models\Room;
 use App\Models\Spot;
+use App\Models\ItemImage;
 
 class ItemController extends Controller
 {
@@ -189,8 +190,38 @@ class ItemController extends Controller
     public function edit(Item $item)
     {
         $this->authorize('update', $item);
+        
         $categories = ItemCategory::where('user_id', auth()->id())->get();
-        return view('items.edit', compact('item', 'categories'));
+        
+        // 获取所有地点数据，包括完整的层级结构
+        $locations = Area::where('user_id', auth()->id())
+            ->with(['rooms.spots']) // 预加载关联数据
+            ->get()
+            ->map(function($area) {
+                return [
+                    'area' => $area->name,
+                    'rooms' => $area->rooms->map(function($room) {
+                        return [
+                            'name' => $room->name,
+                            'spots' => $room->spots->map(function($spot) {
+                                return [
+                                    'id' => $spot->id,
+                                    'name' => $spot->name
+                                ];
+                            })->values()->all()
+                        ];
+                    })->values()->all()
+                ];
+            })->values()->all();
+
+        \Log::info('Final locations data:', ['locations' => $locations]);
+        \Log::info('Item location data:', [
+            'area' => $item->spot?->room?->area?->name,
+            'room' => $item->spot?->room?->name,
+            'spot' => $item->spot?->name,
+        ]);
+
+        return view('items.edit', compact('item', 'categories', 'locations'));
     }
 
     public function update(Request $request, Item $item)
@@ -267,5 +298,22 @@ class ItemController extends Controller
     public function show(Item $item)
     {
         return view('items.show', compact('item'));
+    }
+
+    public function deleteImage($imageId)
+    {
+        $image = ItemImage::findOrFail($imageId);
+        $this->authorize('update', $image->item);
+
+        try {
+            // 删除存储的文件
+            Storage::disk('public')->delete($image->path);
+            // 删除数据库记录
+            $image->delete();
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+        }
     }
 } 
