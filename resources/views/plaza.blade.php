@@ -12,7 +12,7 @@
                     <p class="text-3xl font-bold text-green-600">{{ $totalUsers }}</p>
                 </div>
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-2">今日新增</h3>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">今日新增物品</h3>
                     <p class="text-3xl font-bold text-purple-600">{{ $todayItems }}</p>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                                         <div class="w-24 h-24 flex-shrink-0">
                                             @if($item->primaryImage)
                                                 <img src="{{ asset('storage/' . $item->primaryImage->path) }}"
-                                                     alt="{{ $item->name }}" 
+                                                     alt="{{ $item->name }}"
                                                      class="w-full h-full object-cover rounded-lg">
                                             @else
                                                 <div class="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
@@ -58,7 +58,7 @@
                             @endforeach
                         </div>
                         <div class="mt-4">
-                            <a href="{{ route('items.index') }}" 
+                            <a href="{{ route('items.index') }}"
                                class="text-blue-600 hover:text-blue-800">
                                 查看所有物品 →
                             </a>
@@ -87,4 +87,4 @@
             </div>
         </div>
     </div>
-</x-app-layout> 
+</x-app-layout>

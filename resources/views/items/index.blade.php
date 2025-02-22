@@ -5,7 +5,7 @@
                 <div class="p-6 bg-white border-b border-gray-200">
                     @auth
                         <div class="mb-4">
-                            <a href="{{ route('items.create') }}" 
+                            <a href="{{ route('dashboard') }}"
                                class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                                 添加新物品
                             </a>
@@ -19,10 +19,10 @@
                                 <p class="text-gray-600">{{ $item->description }}</p>
                                 <p class="text-sm text-gray-500">数量: {{ $item->quantity }}</p>
                                 <p class="text-sm text-gray-500">所有者: {{ $item->user->name }}</p>
-                                
+
                                 @can('update', $item)
                                     <div class="mt-4">
-                                        <a href="{{ route('items.edit', $item) }}" 
+                                        <a href="{{ route('items.edit', $item) }}"
                                            class="text-blue-600 hover:text-blue-800">
                                             编辑
                                         </a>
@@ -39,4 +39,4 @@
             </div>
         </div>
     </div>
-</x-app-layout> 
+</x-app-layout>
