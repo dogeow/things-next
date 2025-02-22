@@ -1,16 +1,14 @@
 <x-app-layout>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('我的物品管理') }}
+            {{ __('编辑物品') }}
         </h2>
     </x-slot>
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <!-- 添加物品表单 -->
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mb-6">
-                <div class="p-6 border-b border-gray-200">
-                    <h3 class="text-lg font-semibold mb-4">添加新物品</h3>
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-6">
                     @if ($errors->any())
                         <div class="mb-4 bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded">
                             <ul class="list-disc list-inside">
@@ -20,12 +18,16 @@
                             </ul>
                         </div>
                     @endif
-                    <form action="{{ route('items.store') }}" method="POST" enctype="multipart/form-data">
+
+                    <form action="{{ route('items.update', $item) }}" method="POST" enctype="multipart/form-data">
                         @csrf
+                        @method('PUT')
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- 基本信息 -->
                             <div>
                                 <label for="name" class="block text-sm font-medium text-gray-700">物品名称 <span class="text-red-500">*</span></label>
                                 <input type="text" name="name" id="name" 
+                                    value="{{ old('name', $item->name) }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     required>
                             </div>
@@ -33,13 +35,15 @@
                             <div>
                                 <label for="quantity" class="block text-sm font-medium text-gray-700">数量 <span class="text-red-500">*</span></label>
                                 <input type="number" name="quantity" id="quantity" 
+                                    value="{{ old('quantity', $item->quantity) }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    min="1" value="1" required>
+                                    min="1" required>
                             </div>
 
                             <div>
                                 <label for="purchase_date" class="block text-sm font-medium text-gray-700">购买时间</label>
                                 <input type="date" name="purchase_date" id="purchase_date" 
+                                    value="{{ old('purchase_date', $item->purchase_date?->format('Y-m-d')) }}"
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     max="{{ date('Y-m-d') }}">
                             </div>
@@ -47,8 +51,8 @@
                             <div>
                                 <label for="expiry_date" class="block text-sm font-medium text-gray-700">过期时间</label>
                                 <input type="date" name="expiry_date" id="expiry_date" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    min="{{ date('Y-m-d') }}">
+                                    value="{{ old('expiry_date', $item->expiry_date?->format('Y-m-d')) }}"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             </div>
 
                             <div>
@@ -58,11 +62,13 @@
                                         <span class="text-gray-500 sm:text-sm">¥</span>
                                     </div>
                                     <input type="number" name="purchase_price" id="purchase_price" 
+                                        value="{{ old('purchase_price', $item->purchase_price) }}"
                                         class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         step="0.01" min="0">
                                 </div>
                             </div>
 
+                            <!-- 分类选择 -->
                             <div>
                                 <label for="category" class="block text-sm font-medium text-gray-700">分类</label>
                                 <div class="mt-1">
@@ -70,6 +76,7 @@
                                         id="category" 
                                         name="new_category" 
                                         list="category-list"
+                                        value="{{ old('new_category', $item->category?->name) }}"
                                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         placeholder="输入或选择分类"
                                         autocomplete="off">
@@ -78,11 +85,12 @@
                                             <option value="{{ $category->name }}" data-id="{{ $category->id }}">
                                         @endforeach
                                     </datalist>
-                                    <input type="hidden" name="category_id" id="category_id">
+                                    <input type="hidden" name="category_id" id="category_id" value="{{ old('category_id', $item->category_id) }}">
                                 </div>
                                 <p class="mt-1 text-sm text-gray-500">输入新分类名称或从已有分类中选择</p>
                             </div>
 
+                            <!-- 地点选择 -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">存放地点</label>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-1">
@@ -91,6 +99,7 @@
                                         <input type="text" 
                                             id="area_input" 
                                             list="area-list"
+                                            value="{{ $item->spot?->room?->area?->name }}"
                                             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                             placeholder="选择或输入区域"
                                             autocomplete="off">
@@ -106,6 +115,7 @@
                                         <input type="text" 
                                             id="room_input" 
                                             list="room-list"
+                                            value="{{ $item->spot?->room?->name }}"
                                             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                             placeholder="选择或输入房间"
                                             autocomplete="off">
@@ -118,6 +128,7 @@
                                         <input type="text" 
                                             id="spot_input" 
                                             list="spot-list"
+                                            value="{{ $item->spot?->name }}"
                                             class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                             placeholder="选择或输入具体位置"
                                             autocomplete="off">
@@ -125,16 +136,19 @@
                                         </datalist>
                                     </div>
                                 </div>
-                                <input type="hidden" name="location_input" id="location_input">
-                                <input type="hidden" name="spot_id" id="spot_id">
+                                <input type="hidden" name="location_input" id="location_input" 
+                                    value="{{ $item->spot ? $item->spot->room->area->name . '/' . $item->spot->room->name . '/' . $item->spot->name : '' }}">
+                                <input type="hidden" name="spot_id" id="spot_id" value="{{ $item->spot_id }}">
                             </div>
 
+                            <!-- 描述 -->
                             <div class="md:col-span-2">
                                 <label for="description" class="block text-sm font-medium text-gray-700">描述</label>
                                 <textarea name="description" id="description" rows="3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('description', $item->description) }}</textarea>
                             </div>
 
+                            <!-- 图片管理部分保持原样 -->
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700">物品图片 <span class="text-red-500">*</span></label>
                                 <div class="mt-2 grid grid-cols-6 gap-4" id="imagePreviewGrid">
@@ -161,16 +175,25 @@
                             </div>
                         </div>
 
-                        <div class="mt-4 flex justify-end">
+                        <div class="mt-4 flex justify-end space-x-3">
+                            <a href="{{ route('dashboard') }}" 
+                                class="px-4 py-2 border rounded-md hover:bg-gray-50">
+                                取消
+                            </a>
                             <button type="submit" 
                                 class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                                添加物品
+                                保存修改
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
+        </div>
     </div>
+
+    @push('scripts')
+    <!-- ... 原有的脚本代码 ... -->
+    @endpush
 </x-app-layout>
 
 <script>
