@@ -14,7 +14,7 @@
     </x-slot>
 
     <div class="py-6">
-        <div class="max-w-4xl mx-auto sm:px-4 lg:px-6">
+        <div class="max-w-5xl mx-auto sm:px-4 lg:px-6">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-4">
                     <!-- 图片展示区 -->
@@ -22,7 +22,7 @@
                         <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
                             <!-- 主图 -->
                             <div class="lg:col-span-3">
-                                <div class="relative pb-[60%]">
+                                <div class="relative pb-[75%]">
                                     @if($item->primaryImage)
                                         <img src="{{ asset('storage/' . $item->primaryImage->path) }}"
                                              alt="{{ $item->name }}"
@@ -55,37 +55,37 @@
                     <!-- 物品信息 -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div class="lg:col-span-2">
-                            <h3 class="text-lg font-semibold text-gray-900">{{ $item->name }}</h3>
-                            <div class="mt-2">
-                                <p class="text-sm text-gray-700">{{ $item->description }}</p>
+                            <h3 class="text-xl font-bold text-gray-900">{{ $item->name }}</h3>
+                            <div class="mt-3">
+                                <p class="text-gray-700">{{ $item->description }}</p>
                             </div>
                         </div>
 
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <div class="space-y-2">
+                            <div class="space-y-3">
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">数量</h4>
-                                    <p class="mt-1 text-sm font-semibold text-gray-900">{{ $item->quantity }}</p>
+                                    <p class="mt-1 text-base font-semibold text-gray-900">{{ $item->quantity }}</p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">分类</h4>
-                                    <p class="mt-1 text-sm text-gray-900">{{ $item->category ? $item->category->name : '未分类' }}</p>
+                                    <p class="mt-1 text-gray-900">{{ $item->category ? $item->category->name : '未分类' }}</p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">购买时间</h4>
-                                    <p class="mt-1 text-sm text-gray-900">
+                                    <p class="mt-1 text-gray-900">
                                         {{ $item->purchase_date ? date('Y-m-d', strtotime($item->purchase_date)) : '未记录' }}
                                     </p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">购买价格</h4>
-                                    <p class="mt-1 text-sm text-gray-900">
+                                    <p class="mt-1 text-gray-900">
                                         {{ $item->purchase_price ? '¥' . number_format($item->purchase_price, 2) : '未记录' }}
                                     </p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">所有者</h4>
-                                    <p class="mt-1 text-sm text-gray-900">{{ $item->user->name }}</p>
+                                    <p class="mt-1 text-base text-gray-900">{{ $item->user->name }}</p>
                                 </div>
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">创建时间</h4>
@@ -98,13 +98,13 @@
                                 <div>
                                     <h4 class="text-sm font-medium text-gray-500">过期时间</h4>
                                     @if($item->expiry_date)
-                                        <p class="mt-1 text-sm text-gray-900">{{ date('Y-m-d', strtotime($item->expiry_date)) }}
+                                        <p class="mt-1 text-gray-900">{{ date('Y-m-d', strtotime($item->expiry_date)) }}
                                             @if(strtotime($item->expiry_date) < time())
                                                 <span class="text-red-500">(已过期)</span>
                                             @endif
                                         </p>
                                     @else
-                                        <p class="mt-1 text-sm text-gray-900">无过期时间</p>
+                                        <p class="mt-1 text-gray-900">无过期时间</p>
                                     @endif
                                 </div>
                             </div>

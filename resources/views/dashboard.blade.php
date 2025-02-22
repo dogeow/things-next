@@ -24,25 +24,17 @@
                         @csrf
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <label for="name" class="block text-sm font-medium text-gray-700">物品名称</label>
+                                <label for="name" class="block text-sm font-medium text-gray-700">物品名称 <span class="text-red-500">*</span></label>
                                 <input type="text" name="name" id="name" 
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     required>
                             </div>
 
                             <div>
-                                <label for="quantity" class="block text-sm font-medium text-gray-700">数量</label>
+                                <label for="quantity" class="block text-sm font-medium text-gray-700">数量 <span class="text-red-500">*</span></label>
                                 <input type="number" name="quantity" id="quantity" 
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     min="1" value="1" required>
-                            </div>
-
-                            <div>
-                                <label for="expiry_date" class="block text-sm font-medium text-gray-700">过期时间</label>
-                                <input type="date" name="expiry_date" id="expiry_date" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    min="{{ date('Y-m-d') }}">
-                                <p class="mt-1 text-sm text-gray-500">可选，留空表示无过期时间</p>
                             </div>
 
                             <div>
@@ -50,6 +42,13 @@
                                 <input type="date" name="purchase_date" id="purchase_date" 
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     max="{{ date('Y-m-d') }}">
+                            </div>
+
+                            <div>
+                                <label for="expiry_date" class="block text-sm font-medium text-gray-700">过期时间</label>
+                                <input type="date" name="expiry_date" id="expiry_date" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    min="{{ date('Y-m-d') }}">
                             </div>
 
                             <div>
@@ -69,10 +68,10 @@
                                 <div class="mt-1 flex rounded-md shadow-sm">
                                     <select name="category_id" id="category_select" 
                                         class="rounded-l-md border-r-0 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                        <option value="">选择或输入新分类</option>
                                         @foreach($categories as $category)
                                             <option value="{{ $category->id }}">{{ $category->name }}</option>
                                         @endforeach
+                                        <option value="">选择或输入新分类</option>
                                     </select>
                                     <input type="text" id="new_category" name="new_category" 
                                         class="hidden rounded-r-md block w-full border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -88,7 +87,7 @@
                             </div>
 
                             <div class="md:col-span-2">
-                                <label class="block text-sm font-medium text-gray-700">物品图片</label>
+                                <label class="block text-sm font-medium text-gray-700">物品图片 <span class="text-red-500">*</span></label>
                                 <div class="mt-2 grid grid-cols-6 gap-4" id="imagePreviewGrid">
                                     <label class="relative border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-gray-400 transition-colors cursor-pointer w-[120px] h-[120px] flex flex-col items-center justify-center">
                                         <input type="file" 
