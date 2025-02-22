@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Item;
+use App\Models\ItemCategory;
 use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
@@ -20,7 +21,8 @@ class ItemController extends Controller
 
     public function create()
     {
-        return view('items.create');
+        $categories = ItemCategory::where('user_id', auth()->id())->get();
+        return view('items.create', compact('categories'));
     }
 
     public function store(Request $request)
@@ -42,6 +44,10 @@ class ItemController extends Controller
                 'description' => 'nullable|string',
                 'quantity' => 'required|integer|min:1',
                 'expiry_date' => 'nullable|date|after_or_equal:today',
+                'purchase_date' => 'nullable|date|before_or_equal:today',
+                'purchase_price' => 'nullable|numeric|min:0',
+                'category_id' => 'nullable|exists:item_categories,id',
+                'new_category' => 'required_if:category_id,null|nullable|string|max:255',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                 'primary_image' => 'required|integer|min:0'
             ]);
@@ -49,11 +55,23 @@ class ItemController extends Controller
             \DB::beginTransaction(); // 开始事务
 
             try {
+                // 处理新分类
+                if (empty($validated['category_id']) && !empty($validated['new_category'])) {
+                    $category = ItemCategory::create([
+                        'name' => $validated['new_category'],
+                        'user_id' => auth()->id()
+                    ]);
+                    $validated['category_id'] = $category->id;
+                }
+
                 $item = $request->user()->items()->create([
                     'name' => $validated['name'],
                     'description' => $validated['description'],
                     'quantity' => $validated['quantity'],
                     'expiry_date' => $validated['expiry_date'],
+                    'purchase_date' => $validated['purchase_date'],
+                    'purchase_price' => $validated['purchase_price'],
+                    'category_id' => $validated['category_id'],
                 ]);
 
                 \Log::info('物品创建成功', ['item_id' => $item->id]);
@@ -162,7 +180,8 @@ class ItemController extends Controller
     public function edit(Item $item)
     {
         $this->authorize('update', $item);
-        return view('items.edit', compact('item'));
+        $categories = ItemCategory::where('user_id', auth()->id())->get();
+        return view('items.edit', compact('item', 'categories'));
     }
 
     public function update(Request $request, Item $item)
@@ -174,12 +193,34 @@ class ItemController extends Controller
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:1',
             'expiry_date' => 'nullable|date|after_or_equal:today',
+            'purchase_date' => 'nullable|date|before_or_equal:today',
+            'purchase_price' => 'nullable|numeric|min:0',
+            'category_id' => 'nullable|exists:item_categories,id',
+            'new_category' => 'required_if:category_id,null|nullable|string|max:255',
         ]);
 
-        $item->update($validated);
+        try {
+            DB::beginTransaction();
 
-        return redirect()->route('items.index')
-            ->with('success', '物品更新成功！');
+            // 处理新分类
+            if (empty($validated['category_id']) && !empty($validated['new_category'])) {
+                $category = ItemCategory::create([
+                    'name' => $validated['new_category'],
+                    'user_id' => auth()->id()
+                ]);
+                $validated['category_id'] = $category->id;
+            }
+
+            $item->update($validated);
+
+            DB::commit();
+            return redirect()->route('dashboard')->with('success', '物品更新成功！');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()
+                ->withInput()
+                ->withErrors(['general' => $e->getMessage()]);
+        }
     }
 
     public function plaza()

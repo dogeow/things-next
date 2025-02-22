@@ -45,6 +45,41 @@
                                 <p class="mt-1 text-sm text-gray-500">可选，留空表示无过期时间</p>
                             </div>
 
+                            <div>
+                                <label for="purchase_date" class="block text-sm font-medium text-gray-700">购买时间</label>
+                                <input type="date" name="purchase_date" id="purchase_date" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    max="{{ date('Y-m-d') }}">
+                            </div>
+
+                            <div>
+                                <label for="purchase_price" class="block text-sm font-medium text-gray-700">购买价格</label>
+                                <div class="mt-1 relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">¥</span>
+                                    </div>
+                                    <input type="number" name="purchase_price" id="purchase_price" 
+                                        class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        step="0.01" min="0">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label for="category" class="block text-sm font-medium text-gray-700">分类</label>
+                                <div class="mt-1 flex rounded-md shadow-sm">
+                                    <select name="category_id" id="category_select" 
+                                        class="rounded-l-md border-r-0 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="">选择或输入新分类</option>
+                                        @foreach($categories as $category)
+                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="text" id="new_category" name="new_category" 
+                                        class="hidden rounded-r-md block w-full border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="输入新分类">
+                                </div>
+                            </div>
+
                             <div class="md:col-span-2">
                                 <label for="description" class="block text-sm font-medium text-gray-700">描述</label>
                                 <textarea name="description" id="description" rows="3"
@@ -268,6 +303,17 @@ document.querySelector('form').addEventListener('submit', function(e) {
         errorDiv.textContent = '请至少上传一张图片';
         errorDiv.classList.remove('hidden');
         return false;
+    }
+});
+
+document.getElementById('category_select').addEventListener('change', function() {
+    const newCategoryInput = document.getElementById('new_category');
+    if (this.value === '') {
+        newCategoryInput.classList.remove('hidden');
+        this.classList.add('rounded-r-none');
+    } else {
+        newCategoryInput.classList.add('hidden');
+        this.classList.remove('rounded-r-none');
     }
 });
 </script>

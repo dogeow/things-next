@@ -64,6 +64,22 @@
                                     <p class="mt-1 text-lg font-semibold text-gray-900">{{ $item->quantity }}</p>
                                 </div>
                                 <div>
+                                    <h4 class="text-sm font-medium text-gray-500">分类</h4>
+                                    <p class="mt-1 text-gray-900">{{ $item->category ? $item->category->name : '未分类' }}</p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">购买时间</h4>
+                                    <p class="mt-1 text-gray-900">
+                                        {{ $item->purchase_date ? date('Y-m-d', strtotime($item->purchase_date)) : '未记录' }}
+                                    </p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">购买价格</h4>
+                                    <p class="mt-1 text-gray-900">
+                                        {{ $item->purchase_price ? '¥' . number_format($item->purchase_price, 2) : '未记录' }}
+                                    </p>
+                                </div>
+                                <div>
                                     <h4 class="text-sm font-medium text-gray-500">所有者</h4>
                                     <p class="mt-1 text-lg font-semibold text-gray-900">{{ $item->user->name }}</p>
                                 </div>
