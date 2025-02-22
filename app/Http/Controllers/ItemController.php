@@ -247,6 +247,10 @@ class ItemController extends Controller
             'purchase_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:item_categories,id',
             'new_category' => 'nullable|string|max:255',
+            'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
+            'primary_image' => 'required|integer|min:0',
+            'location_input' => 'nullable|string',
+            'spot_id' => 'nullable|exists:spots,id'
         ]);
 
         try {
@@ -272,6 +276,51 @@ class ItemController extends Controller
             }
 
             $item->update($validated);
+
+            if ($request->hasFile('images')) {
+                $images = $request->file('images');
+                $primaryIndex = (int) $request->input('primary_image', 0);
+
+                \Log::info('处理图片数组', [
+                    'images_count' => count($images),
+                    'primary_index' => $primaryIndex
+                ]);
+
+                foreach ($images as $index => $image) {
+                    // 生成唯一的文件名
+                    $filename = uniqid('item_') . '.' . $image->getClientOriginalExtension();
+                    
+                    // 存储图片
+                    $path = $image->storeAs('items', $filename, 'public');
+                    
+                    \Log::info('准备保存图片记录', [
+                        'index' => $index,
+                        'path' => $path,
+                        'is_primary' => $index == $primaryIndex,
+                        'item_id' => $item->id
+                    ]);
+
+                    // 验证文件是否成功保存
+                    if (!Storage::disk('public')->exists($path)) {
+                        throw new \Exception("文件 {$path} 保存失败");
+                    }
+
+                    // 直接使用 DB 查询构建器来创建记录，以便捕获任何SQL错误
+                    $imageRecord = \DB::table('item_images')->insert([
+                        'item_id' => $item->id,
+                        'path' => $path,
+                        'is_primary' => $index == $primaryIndex,
+                        'sort_order' => $index,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    \Log::info('图片记录创建结果', [
+                        'success' => $imageRecord,
+                        'path' => $path
+                    ]);
+                }
+            }
 
             DB::commit();
             return redirect()->route('dashboard')->with('success', '物品更新成功！');
