@@ -84,23 +84,49 @@
                             </div>
 
                             <div>
-                                <label for="location" class="block text-sm font-medium text-gray-700">存放地点</label>
-                                <div class="mt-1">
-                                    <input type="text" 
-                                        id="location" 
-                                        name="location_input" 
-                                        list="location-list"
-                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="输入或选择存放地点"
-                                        autocomplete="off">
-                                    <datalist id="location-list">
-                                        @foreach($locations as $location)
-                                            <option value="{{ $location['fullPath'] }}" data-id="{{ $location['id'] }}">
-                                        @endforeach
-                                    </datalist>
-                                    <input type="hidden" name="spot_id" id="spot_id">
+                                <label class="block text-sm font-medium text-gray-700">存放地点</label>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-1">
+                                    <!-- 区域选择/输入 -->
+                                    <div>
+                                        <input type="text" 
+                                            id="area_input" 
+                                            list="area-list"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                            placeholder="选择或输入区域"
+                                            autocomplete="off">
+                                        <datalist id="area-list">
+                                            @foreach($locations as $location)
+                                                <option value="{{ $location['area'] }}">
+                                            @endforeach
+                                        </datalist>
+                                    </div>
+
+                                    <!-- 房间选择/输入 -->
+                                    <div>
+                                        <input type="text" 
+                                            id="room_input" 
+                                            list="room-list"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                            placeholder="选择或输入房间"
+                                            autocomplete="off">
+                                        <datalist id="room-list">
+                                        </datalist>
+                                    </div>
+
+                                    <!-- 具体位置输入 -->
+                                    <div>
+                                        <input type="text" 
+                                            id="spot_input" 
+                                            list="spot-list"
+                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                            placeholder="选择或输入具体位置"
+                                            autocomplete="off">
+                                        <datalist id="spot-list">
+                                        </datalist>
+                                    </div>
                                 </div>
-                                <p class="mt-1 text-sm text-gray-500">格式：区域/房间/具体位置（如：家里/书房/第一个抽屉）</p>
+                                <input type="hidden" name="location_input" id="location_input">
+                                <input type="hidden" name="spot_id" id="spot_id">
                             </div>
 
                             <div class="md:col-span-2">
@@ -360,33 +386,87 @@ document.getElementById('category').addEventListener('input', function(e) {
     }
 });
 
-document.getElementById('location').addEventListener('input', function(e) {
-    const input = e.target;
-    const datalist = document.getElementById('location-list');
+document.addEventListener('DOMContentLoaded', function() {
+    const areaInput = document.getElementById('area_input');
+    const roomInput = document.getElementById('room_input');
+    const spotInput = document.getElementById('spot_input');
+    const locationInput = document.getElementById('location_input');
     const spotIdInput = document.getElementById('spot_id');
-    
-    // 获取所有选项
-    const options = Array.from(datalist.options);
-    
-    // 查找是否匹配已有地点
-    const matchingOption = options.find(option => option.value === input.value);
-    
-    if (matchingOption) {
-        // 如果匹配到已有地点，设置 spot_id
-        spotIdInput.value = matchingOption.dataset.id;
-    } else {
-        // 如果是新地点，清空 spot_id
-        spotIdInput.value = '';
+
+    // 存储所有地点数据
+    const locations = @json($locations);
+
+    // 当区域输入变化时更新房间列表
+    areaInput.addEventListener('input', function() {
+        const area = locations.find(a => a.area === this.value);
+        const roomList = document.getElementById('room-list');
+        roomList.innerHTML = '';
         
-        // 解析输入的地点路径
-        const parts = input.value.split('/').map(part => part.trim());
-        if (parts.length === 3) {
-            // 格式正确，可以提交
-            input.setCustomValidity('');
-        } else {
-            // 格式错误，显示提示
-            input.setCustomValidity('请按照格式输入：区域/房间/具体位置');
+        if (area) {
+            area.rooms.forEach(room => {
+                const option = document.createElement('option');
+                option.value = room.name;
+                roomList.appendChild(option);
+            });
         }
-    }
+
+        // 清空房间和位置输入
+        if (this.value !== roomInput.getAttribute('data-last-valid')) {
+            roomInput.value = '';
+            spotInput.value = '';
+            spotIdInput.value = '';
+        }
+        roomInput.setAttribute('data-last-valid', this.value);
+    });
+
+    // 当房间输入变化时更新位置列表
+    roomInput.addEventListener('input', function() {
+        const area = locations.find(a => a.area === areaInput.value);
+        const room = area?.rooms.find(r => r.name === this.value);
+        const spotList = document.getElementById('spot-list');
+        spotList.innerHTML = '';
+        
+        if (room) {
+            room.spots.forEach(spot => {
+                const option = document.createElement('option');
+                option.value = spot.name;
+                option.setAttribute('data-id', spot.id);
+                spotList.appendChild(option);
+            });
+        }
+
+        // 清空位置输入
+        if (this.value !== spotInput.getAttribute('data-last-valid')) {
+            spotInput.value = '';
+            spotIdInput.value = '';
+        }
+        spotInput.setAttribute('data-last-valid', this.value);
+    });
+
+    // 当位置输入变化时更新 spot_id
+    spotInput.addEventListener('input', function() {
+        const area = locations.find(a => a.area === areaInput.value);
+        const room = area?.rooms.find(r => r.name === roomInput.value);
+        const spot = room?.spots.find(s => s.name === this.value);
+        
+        if (spot) {
+            // 如果选择了已有位置，设置 spot_id
+            spotIdInput.value = spot.id;
+            locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
+        } else {
+            // 如果是新位置，清空 spot_id
+            spotIdInput.value = '';
+            locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
+        }
+    });
+
+    // 表单提交前验证
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!areaInput.value || !roomInput.value || !spotInput.value) {
+            e.preventDefault();
+            alert('请填写完整的地点信息');
+            return false;
+        }
+    });
 });
 </script>
