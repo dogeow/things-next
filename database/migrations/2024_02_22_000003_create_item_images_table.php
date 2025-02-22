@@ -23,10 +23,10 @@ return new class extends Migration
     {
         Schema::create('item_images', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('item_id')->constrained()->onDelete('cascade')->comment('关联的物品ID');
-            $table->string('path')->comment('图片路径');
-            $table->boolean('is_primary')->default(false)->comment('是否为主图');
-            $table->integer('sort_order')->default(0)->comment('排序顺序');
+            $table->unsignedBigInteger('item_id')->nullable();
+            $table->string('path');
+            $table->boolean('is_primary')->default(false);
+            $table->integer('sort_order')->default(0);
             $table->timestamps();
         });
     }

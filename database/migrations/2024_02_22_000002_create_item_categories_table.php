@@ -22,18 +22,9 @@ return new class extends Migration
     {
         Schema::create('item_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->comment('分类名称');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade')->comment('所属用户ID');
+            $table->unsignedBigInteger('user_id');  // 移除外键约束
+            $table->string('name');
             $table->timestamps();
-        });
-
-        // 添加外键约束
-        Schema::table('items', function (Blueprint $table) {
-            $table->foreign('category_id')
-                  ->references('id')
-                  ->on('item_categories')
-                  ->nullOnDelete()
-                  ->comment('关联到item_categories表的外键');
         });
     }
 
@@ -44,9 +35,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('items', function (Blueprint $table) {
-            $table->dropForeign(['category_id']);
-        });
         Schema::dropIfExists('item_categories');
     }
 }; 

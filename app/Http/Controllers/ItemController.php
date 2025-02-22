@@ -51,26 +51,36 @@ class ItemController extends Controller
                 'purchase_date' => 'nullable|date|before_or_equal:today',
                 'purchase_price' => 'nullable|numeric|min:0',
                 'category_id' => 'nullable|exists:item_categories,id',
-                'new_category' => 'required_if:category_id,null|nullable|string|max:255',
+                'new_category' => 'nullable|string|max:255',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                 'primary_image' => 'required|integer|min:0',
-                'location_input' => 'required|string',
+                'location_input' => 'nullable|string',
                 'spot_id' => 'nullable|exists:spots,id'
             ]);
 
             DB::beginTransaction();
 
-            // 处理新分类
-            if (empty($validated['category_id']) && !empty($validated['new_category'])) {
-                $category = ItemCategory::create([
-                    'name' => $validated['new_category'],
-                    'user_id' => auth()->id()
-                ]);
-                $validated['category_id'] = $category->id;
+            // 处理新分类或使用默认分类
+            if (empty($validated['category_id'])) {
+                if (!empty($validated['new_category'])) {
+                    // 如果输入了新分类名称，创建新分类
+                    $category = ItemCategory::create([
+                        'name' => $validated['new_category'],
+                        'user_id' => auth()->id()
+                    ]);
+                    $validated['category_id'] = $category->id;
+                } else {
+                    // 获取或创建默认分类
+                    $category = ItemCategory::firstOrCreate(
+                        ['name' => '分类', 'user_id' => auth()->id()],
+                        ['name' => '分类', 'user_id' => auth()->id()]
+                    );
+                    $validated['category_id'] = $category->id;
+                }
             }
 
-            // 如果没有选择已有地点，创建新的地点层级
-            if (empty($validated['spot_id']) && !empty($validated['location_input'])) {
+            // 处理地点信息
+            if (!empty($validated['location_input'])) {
                 $parts = array_map('trim', explode('/', $validated['location_input']));
                 if (count($parts) === 3) {
                     // 创建或获取区域
@@ -236,19 +246,29 @@ class ItemController extends Controller
             'purchase_date' => 'nullable|date|before_or_equal:today',
             'purchase_price' => 'nullable|numeric|min:0',
             'category_id' => 'nullable|exists:item_categories,id',
-            'new_category' => 'required_if:category_id,null|nullable|string|max:255',
+            'new_category' => 'nullable|string|max:255',
         ]);
 
         try {
             DB::beginTransaction();
 
-            // 处理新分类
-            if (empty($validated['category_id']) && !empty($validated['new_category'])) {
-                $category = ItemCategory::create([
-                    'name' => $validated['new_category'],
-                    'user_id' => auth()->id()
-                ]);
-                $validated['category_id'] = $category->id;
+            // 处理新分类或使用默认分类
+            if (empty($validated['category_id'])) {
+                if (!empty($validated['new_category'])) {
+                    // 如果输入了新分类名称，创建新分类
+                    $category = ItemCategory::create([
+                        'name' => $validated['new_category'],
+                        'user_id' => auth()->id()
+                    ]);
+                    $validated['category_id'] = $category->id;
+                } else {
+                    // 获取或创建默认分类
+                    $category = ItemCategory::firstOrCreate(
+                        ['name' => '分类', 'user_id' => auth()->id()],
+                        ['name' => '分类', 'user_id' => auth()->id()]
+                    );
+                    $validated['category_id'] = $category->id;
+                }
             }
 
             $item->update($validated);
@@ -300,20 +320,49 @@ class ItemController extends Controller
         return view('items.show', compact('item'));
     }
 
-    public function deleteImage($imageId)
+    public function destroyImage(ItemImage $image)
     {
-        $image = ItemImage::findOrFail($imageId);
-        $this->authorize('update', $image->item);
+        // 确保当前用户有权限删除这张图片
+        if ($image->item->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        // 如果是主图，直接阻止删除
+        if ($image->is_primary) {
+            return back()->with('error', '不能删除主图，请先设置其他图片为主图');
+        }
+
+        // 删除存储中的文件
+        Storage::disk('public')->delete($image->path);
+
+        // 删除数据库记录
+        $image->delete();
+
+        return back()->with('success', '图片已删除');
+    }
+
+    public function setPrimary(ItemImage $image)
+    {
+        // 确保当前用户有权限修改这张图片
+        if ($image->item->user_id !== auth()->id()) {
+            abort(403);
+        }
 
         try {
-            // 删除存储的文件
-            Storage::disk('public')->delete($image->path);
-            // 删除数据库记录
-            $image->delete();
+            DB::beginTransaction();
 
-            return response()->json(['success' => true]);
+            // 将该物品的所有图片设为非主图
+            ItemImage::where('item_id', $image->item_id)
+                ->update(['is_primary' => false]);
+
+            // 将当前图片设为主图
+            $image->update(['is_primary' => true]);
+
+            DB::commit();
+            return back()->with('success', '主图设置成功');
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => $e->getMessage()]);
+            DB::rollBack();
+            return back()->with('error', '设置主图失败：' . $e->getMessage());
         }
     }
 } 

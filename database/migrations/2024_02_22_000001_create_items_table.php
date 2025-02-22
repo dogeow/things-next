@@ -23,20 +23,21 @@ return new class extends Migration
      * - purchase_date: 购买时间
      * - purchase_price: 购买价格
      * - category_id: 分类ID
+     * - spot_id: 地点ID
      */
     public function up(): void
     {
         Schema::create('items', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->comment('物品名称');
-            $table->text('description')->nullable()->comment('物品描述');
-            $table->foreignId('user_id')->constrained()->onDelete('cascade')->comment('所属用户ID');
-            $table->integer('quantity')->default(1)->comment('数量');
-            $table->string('status')->default('active')->comment('状态');
-            $table->date('expiry_date')->nullable()->comment('过期时间');
-            $table->date('purchase_date')->nullable()->comment('购买时间');
-            $table->decimal('purchase_price', 10, 2)->nullable()->comment('购买价格');
-            $table->foreignId('category_id')->nullable()->comment('分类ID');
+            $table->unsignedBigInteger('user_id');  // 移除外键约束
+            $table->string('name');
+            $table->text('description')->nullable();
+            $table->integer('quantity');
+            $table->date('purchase_date')->nullable();
+            $table->date('expiry_date')->nullable();
+            $table->decimal('purchase_price', 10, 2)->nullable();
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->unsignedBigInteger('spot_id')->nullable();
             $table->timestamps();
         });
     }

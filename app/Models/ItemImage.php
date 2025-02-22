@@ -6,10 +6,15 @@ use Illuminate\Database\Eloquent\Model;
 
 class ItemImage extends Model
 {
-    protected $fillable = ['path', 'is_primary', 'sort_order'];
+    protected $fillable = [
+        'item_id',
+        'path',
+        'is_primary',
+        'sort_order'
+    ];
 
     public function item()
     {
-        return $this->belongsTo(Item::class);
+        return $this->belongsTo(Item::class)->withDefault();
     }
 } 

@@ -18,21 +18,27 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // 图片删除路由必须放在 resource 路由之前
+    Route::delete('/items/images/{image}', [ItemController::class, 'destroyImage'])
+        ->name('items.images.destroy')
+        ->where('image', '[0-9]+'); // 添加约束，确保 image 是数字
+
     // 需要登录的物品管理路由
     Route::resource('items', ItemController::class)->except(['index', 'show']);
-
+    
     Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');
     Route::post('/locations', [LocationController::class, 'store'])->name('locations.store');
 
     Route::get('/categories', [CategoryController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->name('categories.store');
     Route::delete('/categories/{category}', [CategoryController::class, 'destroy'])->name('categories.destroy');
+
+    Route::put('/items/images/{image}/set-primary', [ItemController::class, 'setPrimary'])
+        ->name('items.images.set-primary');
 });
 
 // 公开的物品路由
 Route::get('/items', [ItemController::class, 'index'])->name('items.index');
 Route::get('/items/{item}', [ItemController::class, 'show'])->name('items.show');
-
-Route::delete('/items/images/{image}', [ItemController::class, 'deleteImage'])->name('items.images.destroy');
 
 require __DIR__.'/auth.php';

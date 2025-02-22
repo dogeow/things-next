@@ -78,7 +78,7 @@
                                         list="category-list"
                                         value="{{ old('new_category', $item->category?->name) }}"
                                         class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="输入或选择分类"
+                                        placeholder="输入或选择分类（可选）"
                                         autocomplete="off">
                                     <datalist id="category-list">
                                         @foreach($categories as $category)
@@ -87,12 +87,12 @@
                                     </datalist>
                                     <input type="hidden" name="category_id" id="category_id" value="{{ old('category_id', $item->category_id) }}">
                                 </div>
-                                <p class="mt-1 text-sm text-gray-500">输入新分类名称或从已有分类中选择</p>
+                                <p class="mt-1 text-sm text-gray-500">留空将使用默认分类</p>
                             </div>
 
                             <!-- 地点选择 -->
                             <div>
-                                <label class="block text-sm font-medium text-gray-700">存放地点</label>
+                                <label class="block text-sm font-medium text-gray-700">存放地点（可选）</label>
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-1">
                                     <!-- 区域选择/输入 -->
                                     <div>
@@ -155,20 +155,28 @@
                                 <!-- 现有图片显示 -->
                                 <div class="mt-2 grid grid-cols-6 gap-4" id="existingImages">
                                     @foreach($item->images as $image)
-                                        <div class="relative border-2 {{ $image->is_primary ? 'border-blue-500' : 'border-gray-300' }} rounded-lg overflow-hidden" data-image-id="{{ $image->id }}">
+                                        <div class="relative border-2 {{ $image->is_primary ? 'border-blue-500' : 'border-gray-300' }} rounded-lg overflow-hidden">
                                             <img src="{{ asset('storage/' . $image->path) }}" 
                                                 class="w-full h-24 object-cover" 
                                                 alt="{{ $item->name }}">
                                             <div class="absolute top-1 right-1 bg-white rounded-full p-1 shadow flex gap-1">
                                                 @if($image->is_primary)
                                                     <span class="text-blue-500 text-xs">主图</span>
+
                                                 @endif
-                                                <button type="button" 
-                                                    class="delete-image-btn text-red-500 hover:text-red-700">
-                                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                                    </svg>
-                                                </button>
+                                                <form action="{{ route('items.images.destroy', $image->id) }}" 
+                                                    method="POST" 
+                                                    class="inline"
+                                                    onsubmit="return confirm('确定要删除这张图片吗？');">
+                                                    @csrf
+                                                    @method('DELETE')
+                                                    <button type="submit" 
+                                                        class="text-red-500 hover:text-red-700">
+                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                </form>
                                             </div>
                                         </div>
                                     @endforeach
