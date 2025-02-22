@@ -14,7 +14,12 @@ class Item extends Model
         'description',
         'user_id',
         'quantity',
-        'status'
+        'status',
+        'expiry_date'
+    ];
+
+    protected $casts = [
+        'expiry_date' => 'date',
     ];
 
     public function user()

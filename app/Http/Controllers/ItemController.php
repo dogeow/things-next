@@ -41,6 +41,7 @@ class ItemController extends Controller
                 'name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'quantity' => 'required|integer|min:1',
+                'expiry_date' => 'nullable|date|after_or_equal:today',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                 'primary_image' => 'required|integer|min:0'
             ]);
@@ -52,6 +53,7 @@ class ItemController extends Controller
                     'name' => $validated['name'],
                     'description' => $validated['description'],
                     'quantity' => $validated['quantity'],
+                    'expiry_date' => $validated['expiry_date'],
                 ]);
 
                 \Log::info('物品创建成功', ['item_id' => $item->id]);
@@ -171,6 +173,7 @@ class ItemController extends Controller
             'name' => 'required|string|max:255',
             'description' => 'nullable|string',
             'quantity' => 'required|integer|min:1',
+            'expiry_date' => 'nullable|date|after_or_equal:today',
         ]);
 
         $item->update($validated);

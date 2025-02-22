@@ -25,9 +25,17 @@
                             <div>
                                 <label for="quantity" class="block text-sm font-medium text-gray-700">数量</label>
                                 <input type="number" name="quantity" id="quantity" 
-                                    value="{{ old('quantity', $item->quantity) }}"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    min="1" required>
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    min="1" value="{{ old('quantity', $item->quantity) }}" required>
+                            </div>
+
+                            <div>
+                                <label for="expiry_date" class="block text-gray-700 text-sm font-bold mb-2">过期时间</label>
+                                <input type="date" name="expiry_date" id="expiry_date" 
+                                    class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    min="{{ date('Y-m-d') }}"
+                                    value="{{ old('expiry_date', $item->expiry_date ? date('Y-m-d', strtotime($item->expiry_date)) : '') }}">
+                                <p class="mt-1 text-sm text-gray-500">可选，留空表示无过期时间</p>
                             </div>
 
                             <div class="md:col-span-2">

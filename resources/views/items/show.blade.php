@@ -75,6 +75,18 @@
                                     <h4 class="text-sm font-medium text-gray-500">最后更新</h4>
                                     <p class="mt-1 text-gray-900">{{ $item->updated_at->format('Y-m-d H:i:s') }}</p>
                                 </div>
+                                <div>
+                                    <h4 class="text-sm font-medium text-gray-500">过期时间</h4>
+                                    @if($item->expiry_date)
+                                        <p class="mt-1 text-gray-900">{{ date('Y-m-d', strtotime($item->expiry_date)) }}
+                                            @if(strtotime($item->expiry_date) < time())
+                                                (已过期)
+                                            @endif
+                                        </p>
+                                    @else
+                                        <p class="mt-1 text-gray-900">无过期时间</p>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </div>

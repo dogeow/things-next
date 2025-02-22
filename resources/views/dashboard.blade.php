@@ -37,6 +37,14 @@
                                     min="1" value="1" required>
                             </div>
 
+                            <div>
+                                <label for="expiry_date" class="block text-sm font-medium text-gray-700">过期时间</label>
+                                <input type="date" name="expiry_date" id="expiry_date" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    min="{{ date('Y-m-d') }}">
+                                <p class="mt-1 text-sm text-gray-500">可选，留空表示无过期时间</p>
+                            </div>
+
                             <div class="md:col-span-2">
                                 <label for="description" class="block text-sm font-medium text-gray-700">描述</label>
                                 <textarea name="description" id="description" rows="3"
@@ -106,6 +114,14 @@
                                     <a href="{{ route('items.show', $item) }}" class="block">
                                         <h4 class="text-lg font-semibold">{{ $item->name }}</h4>
                                         <div class="text-sm text-gray-500 mt-1">数量: {{ $item->quantity }}</div>
+                                        @if($item->expiry_date)
+                                            <div class="text-sm {{ strtotime($item->expiry_date) < time() ? 'text-red-500' : 'text-gray-500' }} mt-1">
+                                                过期时间: {{ date('Y-m-d', strtotime($item->expiry_date)) }}
+                                                @if(strtotime($item->expiry_date) < time())
+                                                    (已过期)
+                                                @endif
+                                            </div>
+                                        @endif
                                     </a>
                                     <div class="mt-2 flex justify-end">
                                         <a href="{{ route('items.edit', $item) }}" 
