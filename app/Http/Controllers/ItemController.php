@@ -52,113 +52,90 @@ class ItemController extends Controller
                 'primary_image' => 'required|integer|min:0'
             ]);
 
-            \DB::beginTransaction(); // 开始事务
+            DB::beginTransaction();
 
-            try {
-                // 处理新分类
-                if (empty($validated['category_id']) && !empty($validated['new_category'])) {
-                    $category = ItemCategory::create([
-                        'name' => $validated['new_category'],
-                        'user_id' => auth()->id()
-                    ]);
-                    $validated['category_id'] = $category->id;
-                }
-
-                $item = $request->user()->items()->create([
-                    'name' => $validated['name'],
-                    'description' => $validated['description'],
-                    'quantity' => $validated['quantity'],
-                    'expiry_date' => $validated['expiry_date'],
-                    'purchase_date' => $validated['purchase_date'],
-                    'purchase_price' => $validated['purchase_price'],
-                    'category_id' => $validated['category_id'],
+            // 处理新分类
+            if (empty($validated['category_id']) && !empty($validated['new_category'])) {
+                $category = ItemCategory::create([
+                    'name' => $validated['new_category'],
+                    'user_id' => auth()->id()
                 ]);
-
-                \Log::info('物品创建成功', ['item_id' => $item->id]);
-
-                if ($request->hasFile('images')) {
-                    $images = $request->file('images');
-                    $primaryIndex = (int) $request->input('primary_image', 0);
-
-                    \Log::info('处理图片数组', [
-                        'images_count' => count($images),
-                        'primary_index' => $primaryIndex
-                    ]);
-
-                    foreach ($images as $index => $image) {
-                        // 生成唯一的文件名
-                        $filename = uniqid('item_') . '.' . $image->getClientOriginalExtension();
-                        
-                        // 存储图片
-                        $path = $image->storeAs('items', $filename, 'public');
-                        
-                        \Log::info('准备保存图片记录', [
-                            'index' => $index,
-                            'path' => $path,
-                            'is_primary' => $index == $primaryIndex,
-                            'item_id' => $item->id
-                        ]);
-
-                        // 验证文件是否成功保存
-                        if (!Storage::disk('public')->exists($path)) {
-                            throw new \Exception("文件 {$path} 保存失败");
-                        }
-
-                        // 直接使用 DB 查询构建器来创建记录，以便捕获任何SQL错误
-                        $imageRecord = \DB::table('item_images')->insert([
-                            'item_id' => $item->id,
-                            'path' => $path,
-                            'is_primary' => $index == $primaryIndex,
-                            'sort_order' => $index,
-                            'created_at' => now(),
-                            'updated_at' => now()
-                        ]);
-
-                        \Log::info('图片记录创建结果', [
-                            'success' => $imageRecord,
-                            'path' => $path
-                        ]);
-                    }
-                }
-
-                \DB::commit(); // 提交事务
-
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => true,
-                        'redirect' => route('dashboard'),
-                        'message' => '物品创建成功！'
-                    ]);
-                }
-
-                return redirect()->route('dashboard')
-                    ->with('success', '物品创建成功！');
-
-            } catch (\Exception $e) {
-                \DB::rollBack(); // 回滚事务
-                \Log::error('数据库操作失败', [
-                    'error' => $e->getMessage(),
-                    'trace' => $e->getTraceAsString()
-                ]);
-                
-                // 删除已上传的图片
-                if (isset($path)) {
-                    Storage::disk('public')->delete($path);
-                }
-
-                if ($request->ajax()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => $e->getMessage()
-                    ], 422);
-                }
-
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['general' => $e->getMessage()]);
+                $validated['category_id'] = $category->id;
             }
 
+            // 创建物品
+            $item = $request->user()->items()->create([
+                'name' => $validated['name'],
+                'description' => $validated['description'],
+                'quantity' => $validated['quantity'],
+                'expiry_date' => $validated['expiry_date'],
+                'purchase_date' => $validated['purchase_date'],
+                'purchase_price' => $validated['purchase_price'],
+                'category_id' => $validated['category_id'],
+            ]);
+
+            \Log::info('物品创建成功', ['item_id' => $item->id]);
+
+            if ($request->hasFile('images')) {
+                $images = $request->file('images');
+                $primaryIndex = (int) $request->input('primary_image', 0);
+
+                \Log::info('处理图片数组', [
+                    'images_count' => count($images),
+                    'primary_index' => $primaryIndex
+                ]);
+
+                foreach ($images as $index => $image) {
+                    // 生成唯一的文件名
+                    $filename = uniqid('item_') . '.' . $image->getClientOriginalExtension();
+                    
+                    // 存储图片
+                    $path = $image->storeAs('items', $filename, 'public');
+                    
+                    \Log::info('准备保存图片记录', [
+                        'index' => $index,
+                        'path' => $path,
+                        'is_primary' => $index == $primaryIndex,
+                        'item_id' => $item->id
+                    ]);
+
+                    // 验证文件是否成功保存
+                    if (!Storage::disk('public')->exists($path)) {
+                        throw new \Exception("文件 {$path} 保存失败");
+                    }
+
+                    // 直接使用 DB 查询构建器来创建记录，以便捕获任何SQL错误
+                    $imageRecord = \DB::table('item_images')->insert([
+                        'item_id' => $item->id,
+                        'path' => $path,
+                        'is_primary' => $index == $primaryIndex,
+                        'sort_order' => $index,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    \Log::info('图片记录创建结果', [
+                        'success' => $imageRecord,
+                        'path' => $path
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'redirect' => route('dashboard'),
+                    'message' => '物品创建成功！'
+                ]);
+            }
+
+            return redirect()->route('dashboard')
+                ->with('success', '物品创建成功！');
+
         } catch (\Exception $e) {
+            DB::rollBack();
             \Log::error('整体处理失败', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

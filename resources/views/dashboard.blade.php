@@ -65,19 +65,22 @@
 
                             <div>
                                 <label for="category" class="block text-sm font-medium text-gray-700">分类</label>
-                                <div class="mt-1 flex rounded-md shadow-sm">
-                                    <select name="category_id" id="category_select" 
-                                        class="rounded-l-md border-r-0 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <div class="mt-1">
+                                    <input type="text" 
+                                        id="category" 
+                                        name="new_category" 
+                                        list="category-list"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="输入或选择分类"
+                                        autocomplete="off">
+                                    <datalist id="category-list">
                                         @foreach($categories as $category)
-                                            <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                            <option value="{{ $category->name }}" data-id="{{ $category->id }}">
                                         @endforeach
-                                        <option value="">选择或输入新分类</option>
-                                    </select>
-                                    <input type="text" id="new_category" name="new_category" 
-                                        class="hidden rounded-r-md block w-full border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        placeholder="输入新分类名称">
+                                    </datalist>
+                                    <input type="hidden" name="category_id" id="category_id">
                                 </div>
-                                <p class="mt-1 text-sm text-gray-500">选择已有分类或输入新分类名称</p>
+                                <p class="mt-1 text-sm text-gray-500">输入新分类名称或从已有分类中选择</p>
                             </div>
 
                             <div class="md:col-span-2">
@@ -317,15 +320,23 @@ document.querySelector('form').addEventListener('submit', function(e) {
     }
 });
 
-document.getElementById('category_select').addEventListener('change', function() {
-    const newCategoryInput = document.getElementById('new_category');
-    if (this.value === '') {
-        newCategoryInput.classList.remove('hidden');
-        this.classList.add('rounded-r-none');
+document.getElementById('category').addEventListener('input', function(e) {
+    const input = e.target;
+    const datalist = document.getElementById('category-list');
+    const categoryIdInput = document.getElementById('category_id');
+    
+    // 获取所有选项
+    const options = Array.from(datalist.options);
+    
+    // 查找是否匹配已有分类
+    const matchingOption = options.find(option => option.value === input.value);
+    
+    if (matchingOption) {
+        // 如果匹配到已有分类，设置 category_id
+        categoryIdInput.value = matchingOption.dataset.id;
     } else {
-        newCategoryInput.classList.add('hidden');
-        this.classList.remove('rounded-r-none');
-        newCategoryInput.value = ''; // 清空输入
+        // 如果是新分类，清空 category_id
+        categoryIdInput.value = '';
     }
 });
 </script>
