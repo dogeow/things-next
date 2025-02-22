@@ -83,6 +83,26 @@
                                 <p class="mt-1 text-sm text-gray-500">输入新分类名称或从已有分类中选择</p>
                             </div>
 
+                            <div>
+                                <label for="location" class="block text-sm font-medium text-gray-700">存放地点</label>
+                                <div class="mt-1">
+                                    <input type="text" 
+                                        id="location" 
+                                        name="location_input" 
+                                        list="location-list"
+                                        class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="输入或选择存放地点"
+                                        autocomplete="off">
+                                    <datalist id="location-list">
+                                        @foreach($locations as $location)
+                                            <option value="{{ $location['fullPath'] }}" data-id="{{ $location['id'] }}">
+                                        @endforeach
+                                    </datalist>
+                                    <input type="hidden" name="spot_id" id="spot_id">
+                                </div>
+                                <p class="mt-1 text-sm text-gray-500">格式：区域/房间/具体位置（如：家里/书房/第一个抽屉）</p>
+                            </div>
+
                             <div class="md:col-span-2">
                                 <label for="description" class="block text-sm font-medium text-gray-700">描述</label>
                                 <textarea name="description" id="description" rows="3"
@@ -337,6 +357,36 @@ document.getElementById('category').addEventListener('input', function(e) {
     } else {
         // 如果是新分类，清空 category_id
         categoryIdInput.value = '';
+    }
+});
+
+document.getElementById('location').addEventListener('input', function(e) {
+    const input = e.target;
+    const datalist = document.getElementById('location-list');
+    const spotIdInput = document.getElementById('spot_id');
+    
+    // 获取所有选项
+    const options = Array.from(datalist.options);
+    
+    // 查找是否匹配已有地点
+    const matchingOption = options.find(option => option.value === input.value);
+    
+    if (matchingOption) {
+        // 如果匹配到已有地点，设置 spot_id
+        spotIdInput.value = matchingOption.dataset.id;
+    } else {
+        // 如果是新地点，清空 spot_id
+        spotIdInput.value = '';
+        
+        // 解析输入的地点路径
+        const parts = input.value.split('/').map(part => part.trim());
+        if (parts.length === 3) {
+            // 格式正确，可以提交
+            input.setCustomValidity('');
+        } else {
+            // 格式错误，显示提示
+            input.setCustomValidity('请按照格式输入：区域/房间/具体位置');
+        }
     }
 });
 </script>

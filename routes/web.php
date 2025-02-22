@@ -3,6 +3,7 @@
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\LocationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ItemController::class, 'plaza'])->name('plaza');
@@ -18,6 +19,9 @@ Route::middleware('auth')->group(function () {
 
     // 需要登录的物品管理路由
     Route::resource('items', ItemController::class)->except(['index', 'show']);
+
+    Route::get('/locations', [LocationController::class, 'index'])->name('locations.index');
+    Route::post('/locations', [LocationController::class, 'store'])->name('locations.store');
 });
 
 // 公开的物品路由

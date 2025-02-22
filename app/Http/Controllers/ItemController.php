@@ -8,6 +8,9 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use App\Models\Area;
+use App\Models\Room;
+use App\Models\Spot;
 
 class ItemController extends Controller
 {
@@ -49,7 +52,9 @@ class ItemController extends Controller
                 'category_id' => 'nullable|exists:item_categories,id',
                 'new_category' => 'required_if:category_id,null|nullable|string|max:255',
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
-                'primary_image' => 'required|integer|min:0'
+                'primary_image' => 'required|integer|min:0',
+                'location_input' => 'required|string',
+                'spot_id' => 'nullable|exists:spots,id'
             ]);
 
             DB::beginTransaction();
@@ -63,6 +68,32 @@ class ItemController extends Controller
                 $validated['category_id'] = $category->id;
             }
 
+            // 如果没有选择已有地点，创建新的地点层级
+            if (empty($validated['spot_id']) && !empty($validated['location_input'])) {
+                $parts = array_map('trim', explode('/', $validated['location_input']));
+                if (count($parts) === 3) {
+                    // 创建或获取区域
+                    $area = Area::firstOrCreate([
+                        'user_id' => auth()->id(),
+                        'name' => $parts[0]
+                    ]);
+
+                    // 创建或获取房间
+                    $room = Room::firstOrCreate([
+                        'area_id' => $area->id,
+                        'name' => $parts[1]
+                    ]);
+
+                    // 创建具体位置
+                    $spot = Spot::create([
+                        'room_id' => $room->id,
+                        'name' => $parts[2]
+                    ]);
+
+                    $validated['spot_id'] = $spot->id;
+                }
+            }
+
             // 创建物品
             $item = $request->user()->items()->create([
                 'name' => $validated['name'],
@@ -72,6 +103,7 @@ class ItemController extends Controller
                 'purchase_date' => $validated['purchase_date'],
                 'purchase_price' => $validated['purchase_price'],
                 'category_id' => $validated['category_id'],
+                'spot_id' => $validated['spot_id']
             ]);
 
             \Log::info('物品创建成功', ['item_id' => $item->id]);
