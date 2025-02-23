@@ -7,9 +7,6 @@
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-
        <!-- Styles -->
        <script src="https://cdn.tailwindcss.com"></script>
        <!-- Alpine.js -->
