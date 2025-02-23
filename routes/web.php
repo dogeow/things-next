@@ -5,6 +5,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [ItemController::class, 'plaza'])->name('plaza');
@@ -35,6 +36,8 @@ Route::middleware('auth')->group(function () {
 
     Route::put('/items/images/{image}/set-primary', [ItemController::class, 'setPrimary'])
         ->name('items.images.set-primary');
+
+    Route::get('/stats', [StatsController::class, 'index'])->name('stats');
 });
 
 // 公开的物品路由

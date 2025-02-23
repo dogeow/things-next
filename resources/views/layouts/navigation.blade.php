@@ -25,6 +25,9 @@
                         <x-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
                             {{ __('分类管理') }}
                         </x-nav-link>
+                        <x-nav-link :href="route('stats')" :active="request()->routeIs('stats')">
+                            {{ __('物品统计') }}
+                        </x-nav-link>
                     @endauth
                 </div>
             </div>
@@ -91,12 +94,21 @@
                 <x-responsive-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                     {{ __('我的物品') }}
                 </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('locations.index')" :active="request()->routeIs('locations.*')">
+                    {{ __('存放地点') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('categories.index')" :active="request()->routeIs('categories.*')">
+                    {{ __('分类管理') }}
+                </x-responsive-nav-link>
+                <x-responsive-nav-link :href="route('stats')" :active="request()->routeIs('stats')">
+                    {{ __('物品统计') }}
+                </x-responsive-nav-link>
             @endauth
         </div>
 
         <!-- Responsive Settings Options -->
-        @auth
-            <div class="pt-4 pb-1 border-t border-gray-200">
+        <div class="pt-4 pb-1 border-t border-gray-200">
+            @auth
                 <div class="px-4">
                     <div class="font-medium text-base text-gray-800">{{ Auth::user()->name }}</div>
                     <div class="font-medium text-sm text-gray-500">{{ Auth::user()->email }}</div>
@@ -117,9 +129,7 @@
                         </x-responsive-nav-link>
                     </form>
                 </div>
-            </div>
-        @else
-            <div class="pt-4 pb-1 border-t border-gray-200">
+            @else
                 <div class="space-y-1">
                     <x-responsive-nav-link :href="route('login')">
                         {{ __('登录') }}
@@ -128,7 +138,7 @@
                         {{ __('注册') }}
                     </x-responsive-nav-link>
                 </div>
-            </div>
-        @endauth
+            @endauth
+        </div>
     </div>
 </nav>
