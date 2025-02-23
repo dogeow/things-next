@@ -36,21 +36,8 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                     min="1" value="1" required>
                             </div>
-
-                            <div>
-                                <label for="purchase_date" class="block text-sm font-medium text-gray-700">购买时间</label>
-                                <input type="date" name="purchase_date" id="purchase_date" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    max="{{ date('Y-m-d') }}">
-                            </div>
-
-                            <div>
-                                <label for="expiry_date" class="block text-sm font-medium text-gray-700">过期时间</label>
-                                <input type="date" name="expiry_date" id="expiry_date" 
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    min="{{ date('Y-m-d') }}">
-                            </div>
-
+                            
+                            <!-- 购买价格 -->
                             <div>
                                 <label for="purchase_price" class="block text-sm font-medium text-gray-700">购买价格</label>
                                 <div class="mt-1 relative rounded-md shadow-sm">
@@ -61,6 +48,20 @@
                                         class="pl-7 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                         step="0.01" min="0">
                                 </div>
+                            </div>
+
+                             <!-- 购买时间 -->
+                             <div>
+                                <label for="purchase_date" class="block text-sm font-medium text-gray-700">购买时间</label>
+                                <input type="date" name="purchase_date" id="purchase_date" 
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                    max="{{ date('Y-m-d') }}">
+                            </div>
+                            
+                            <div class="md:col-span-2">
+                                <label for="description" class="block text-sm font-medium text-gray-700">描述</label>
+                                <textarea name="description" id="description" rows="3"
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             </div>
 
                             <div>
@@ -81,69 +82,6 @@
                                     <input type="hidden" name="category_id" id="category_id">
                                 </div>
                                 <p class="mt-1 text-sm text-gray-500">输入新分类名称或从已有分类中选择</p>
-                            </div>
-
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700">存放地点</label>
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-1">
-                                    <!-- 区域选择/输入 -->
-                                    <div>
-                                        <input type="text" 
-                                            id="area_input" 
-                                            list="area-list"
-                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                            placeholder="选择或输入区域"
-                                            autocomplete="off">
-                                        <datalist id="area-list">
-                                            @foreach($locations as $location)
-                                                <option value="{{ $location['area'] }}">
-                                            @endforeach
-                                        </datalist>
-                                    </div>
-
-                                    <!-- 房间选择/输入 -->
-                                    <div>
-                                        <input type="text" 
-                                            id="room_input" 
-                                            list="room-list"
-                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                            placeholder="选择或输入房间"
-                                            autocomplete="off">
-                                        <datalist id="room-list">
-                                        </datalist>
-                                    </div>
-
-                                    <!-- 具体位置输入 -->
-                                    <div>
-                                        <input type="text" 
-                                            id="spot_input" 
-                                            list="spot-list"
-                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                            placeholder="选择或输入具体位置"
-                                            autocomplete="off">
-                                        <datalist id="spot-list">
-                                        </datalist>
-                                    </div>
-                                </div>
-                                <input type="hidden" name="location_input" id="location_input">
-                                <input type="hidden" name="spot_id" id="spot_id">
-                            </div>
-
-                            <div class="md:col-span-2">
-                                <label for="description" class="block text-sm font-medium text-gray-700">描述</label>
-                                <textarea name="description" id="description" rows="3"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
-                            </div>
-
-                            <div>
-                                <label class="flex items-center">
-                                    <input type="checkbox" 
-                                        name="is_public" 
-                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                        value="1">
-                                    <span class="ml-2 text-sm text-gray-600">公开展示在广场</span>
-                                </label>
-                                <p class="mt-1 text-xs text-gray-500">其他用户将可以在广场看到这个物品</p>
                             </div>
 
                             <div class="md:col-span-2">
@@ -170,6 +108,94 @@
                                 <input type="hidden" name="primary_image" id="primaryImage" value="0">
                                 <div id="imageError" class="mt-2 text-sm text-red-600 hidden"></div>
                             </div>
+
+                            <div class="md:col-span-2">
+                                <div x-data="{ open: false }" class="border rounded-md">
+                                    <button type="button" 
+                                        @click="open = !open" 
+                                        class="flex justify-between items-center w-full px-4 py-2 text-left text-gray-600 hover:bg-gray-50 focus:outline-none">
+                                        <span class="text-sm font-medium">更多信息（选填）</span>
+                                        <svg :class="{'rotate-180': open}" class="w-5 h-5 transform transition-transform duration-200" 
+                                            fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </button>
+                                    
+                                    <div x-show="open" 
+                                        x-transition:enter="transition ease-out duration-200" 
+                                        x-transition:enter-start="opacity-0 transform -translate-y-2" 
+                                        x-transition:enter-end="opacity-100 transform translate-y-0" 
+                                        x-transition:leave="transition ease-in duration-200" 
+                                        x-transition:leave-start="opacity-100 transform translate-y-0" 
+                                        x-transition:leave-end="opacity-0 transform -translate-y-2" 
+                                        class="px-4 py-3 border-t">
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <!-- 过期时间 -->
+                                            <div>
+                                                <label for="expiry_date" class="block text-sm font-medium text-gray-700">过期时间</label>
+                                                <input type="date" name="expiry_date" id="expiry_date" 
+                                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                    min="{{ date('Y-m-d') }}">
+                                            </div>
+
+                                            <!-- 存放地点 -->
+                                            <div class="md:col-span-2">
+                                                <label class="block text-sm font-medium text-gray-700 mb-2">存放地点</label>
+                                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                                    <!-- 区域选择/输入 -->
+                                                    <div>
+                                                        <input type="text" id="area_input" list="area-list"
+                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                            placeholder="选择或输入区域" autocomplete="off">
+                                                        <datalist id="area-list">
+                                                            @foreach($locations as $location)
+                                                                <option value="{{ $location['area'] }}">
+                                                            @endforeach
+                                                        </datalist>
+                                                    </div>
+
+                                                    <!-- 房间选择/输入 -->
+                                                    <div>
+                                                        <input type="text" 
+                                                            id="room_input" 
+                                                            list="room-list"
+                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                            placeholder="选择或输入房间"
+                                                            autocomplete="off">
+                                                        <datalist id="room-list">
+                                                        </datalist>
+                                                    </div>
+
+                                                    <!-- 具体位置输入 -->
+                                                    <div>
+                                                        <input type="text" 
+                                                            id="spot_input" 
+                                                            list="spot-list"
+                                                            class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                                            placeholder="选择或输入具体位置"
+                                                            autocomplete="off">
+                                                        <datalist id="spot-list">
+                                                        </datalist>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- 是否公开 -->
+                                            <div class="md:col-span-2">
+                                                <label class="flex items-center space-x-3">
+                                                    <input type="checkbox" name="is_public" value="1"
+                                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                    <div>
+                                                        <span class="text-sm font-medium text-gray-700">公开展示在广场</span>
+                                                        <p class="text-xs text-gray-500">其他用户将可以在广场看到这个物品</p>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                        </div>
+
                         </div>
 
                         <div class="mt-4 flex justify-end">
@@ -398,7 +424,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const roomInput = document.getElementById('room_input');
     const spotInput = document.getElementById('spot_input');
     const locationInput = document.getElementById('location_input');
-    const spotIdInput = document.getElementById('spot_id');
 
     // 存储所有地点数据
     const locations = @json($locations);
