@@ -38,7 +38,7 @@ class ProfileController extends Controller
     }
 
     /**
-     * Delete the user's account.
+     * Delete the user's account and related data.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -48,9 +48,20 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
-        Auth::logout();
+        \DB::transaction(function () use ($user) {
+            $user->delete();
 
-        $user->delete();
+            // 删除相关的Item
+            $user->items()->each(function ($item) {
+                $item->images()->delete();
+                $item->categories()->detach();
+                $item->areas()->detach();
+                $item->rooms()->detach();
+                $item->spots()->detach();
+            });
+        });
+
+        Auth::logout();
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
