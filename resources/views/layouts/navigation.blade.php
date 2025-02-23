@@ -34,6 +34,25 @@
 
             <!-- Settings Dropdown -->
             <div class="hidden sm:flex sm:items-center sm:ml-6">
+                <!-- 添加搜索框 -->
+                <div class="relative mx-4">
+                    <form action="{{ route('items.index') }}" method="GET" class="flex items-center">
+                        <input type="text" 
+                               name="search" 
+                               placeholder="搜索物品..." 
+                               value="{{ request('search') }}"
+                               class="rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                               onkeypress="if(event.keyCode == 13) { this.form.submit(); return false; }">
+                        <button type="submit" 
+                                onclick="this.form.submit(); return false;"
+                                class="ml-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+
                 @auth
                     <x-dropdown align="right" width="48">
                         <x-slot name="trigger">

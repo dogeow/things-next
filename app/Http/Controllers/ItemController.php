@@ -17,9 +17,32 @@ class ItemController extends Controller
 {
     use AuthorizesRequests;
 
-    public function index()
+    public function index(Request $request)
     {
-        $items = Item::with('user')->latest()->paginate(10);
+        $query = Item::with('user');
+        
+        // 如果用户已登录，显示公开物品和自己的物品
+        if (auth()->check()) {
+            $query->where(function($q) {
+                $q->where('is_public', true)
+                  ->orWhere('user_id', auth()->id());
+            });
+        } else {
+            // 未登录用户只能看到公开物品
+            $query->where('is_public', true);
+        }
+        
+        // 如果有搜索关键词
+        if ($request->filled('search')) {
+            $search = $request->get('search');
+            $query->where('name', 'like', "%{$search}%");
+        }
+
+        $items = $query->latest()->paginate(10);
+        
+        // 保持搜索参数在分页链接中
+        $items->appends($request->all());
+        
         return view('items.index', compact('items'));
     }
 
