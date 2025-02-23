@@ -178,6 +178,9 @@
                                                         </datalist>
                                                     </div>
                                                 </div>
+                                                <!-- 添加隐藏的输入字段 -->
+                                                <input type="hidden" name="location_input" id="location_input">
+                                                <input type="hidden" name="spot_id" id="spot_id">
                                             </div>
 
                                             <!-- 是否公开 -->
@@ -194,8 +197,7 @@
                                         </div>
                                     </div>
                                 </div>
-                        </div>
-
+                            </div>
                         </div>
 
                         <div class="mt-4 flex justify-end">
@@ -497,10 +499,11 @@ document.addEventListener('DOMContentLoaded', function() {
         const room = area?.rooms?.find(r => r.name === roomInput.value);
         const spot = room?.spots?.find(s => s.name === this.value);
         
+        const spotIdInput = document.getElementById('spot_id');
         if (spot) {
-            spotIdInput.value = spot.id;
+            document.getElementById('spot_id').value = spot.id;
         } else {
-            spotIdInput.value = '';
+            document.getElementById('spot_id').value = '';
         }
         locationInput.value = `${areaInput.value}/${roomInput.value}/${this.value}`;
     });
