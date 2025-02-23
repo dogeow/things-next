@@ -135,6 +135,17 @@
                                     class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                             </div>
 
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" 
+                                        name="is_public" 
+                                        class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        value="1">
+                                    <span class="ml-2 text-sm text-gray-600">公开展示在广场</span>
+                                </label>
+                                <p class="mt-1 text-xs text-gray-500">其他用户将可以在广场看到这个物品</p>
+                            </div>
+
                             <div class="md:col-span-2">
                                 <label class="block text-sm font-medium text-gray-700">物品图片 <span class="text-red-500">*</span></label>
                                 <div class="mt-2 grid grid-cols-6 gap-4" id="imagePreviewGrid">

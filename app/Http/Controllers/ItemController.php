@@ -55,7 +55,8 @@ class ItemController extends Controller
                 'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
                 'primary_image' => 'required|integer|min:0',
                 'location_input' => 'nullable|string',
-                'spot_id' => 'nullable|exists:spots,id'
+                'spot_id' => 'nullable|exists:spots,id',
+                'is_public' => 'boolean'
             ]);
 
             DB::beginTransaction();
@@ -112,7 +113,8 @@ class ItemController extends Controller
                 'purchase_date' => $validated['purchase_date'],
                 'purchase_price' => $validated['purchase_price'],
                 'category_id' => $validated['category_id'],
-                'spot_id' => $validated['spot_id']
+                'spot_id' => $validated['spot_id'],
+                'is_public' => $request->boolean('is_public', false)
             ]);
 
             \Log::info('物品创建成功', ['item_id' => $item->id]);
@@ -248,7 +250,8 @@ class ItemController extends Controller
             'images.*' => 'image|mimes:jpeg,png,jpg,gif|max:2048',
             'primary_image' => 'required|integer|min:0',
             'location_input' => 'nullable|string',
-            'spot_id' => 'nullable|exists:spots,id'
+            'spot_id' => 'nullable|exists:spots,id',
+            'is_public' => 'boolean'
         ]);
 
         try {
@@ -333,6 +336,7 @@ class ItemController extends Controller
     public function plaza()
     {
         $recentItems = Item::with('user')
+            ->where('is_public', true)
             ->latest()
             ->take(6)
             ->get();

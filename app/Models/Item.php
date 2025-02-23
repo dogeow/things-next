@@ -18,7 +18,9 @@ class Item extends Model
         'expiry_date',
         'purchase_date',
         'purchase_price',
-        'category_id'
+        'category_id',
+        'spot_id',
+        'is_public',
     ];
 
     protected $casts = [
