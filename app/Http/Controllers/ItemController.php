@@ -70,10 +70,8 @@ class ItemController extends Controller
                     ]);
                     $validated['category_id'] = $category->id;
                 } else {
-                    // 获取或创建默认分类
                     $category = ItemCategory::firstOrCreate(
-                        ['name' => '分类', 'user_id' => auth()->id()],
-                        ['name' => '分类', 'user_id' => auth()->id()]
+                        ['name' => '未分类', 'user_id' => auth()->id()]
                     );
                     $validated['category_id'] = $category->id;
                 }
