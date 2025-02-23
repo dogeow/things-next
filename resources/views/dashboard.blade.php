@@ -203,7 +203,7 @@
                                                 分类: {{ $item->category->name }}
                                             </div>
                                         @endif
-                                        <div class="text-sm text-gray-500 mt-1">数量: {{ $item->quantity }}</div>
+                                        <div class="text-sm text-gray-500 mt-1">添加：{{ $item->created_at_diff }}</div>
                                         @if($item->expiry_date)
                                             <div class="text-sm {{ strtotime($item->expiry_date) < time() ? 'text-red-500' : 'text-gray-500' }} mt-1">
                                                 过期时间: {{ date('Y-m-d', strtotime($item->expiry_date)) }}
