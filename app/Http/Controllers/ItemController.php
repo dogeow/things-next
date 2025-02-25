@@ -22,7 +22,7 @@ class ItemController extends Controller
     {
         $categories = ItemCategory::where('user_id', auth()->id())->get();
         
-        $query = Item::with(['user','images', 'category']);
+        $query = Item::with(['user','images', 'category', 'spot.room.area']);
         
         // 如果用户已登录，显示公开物品和自己的物品
         if (auth()->check()) {
@@ -41,6 +41,59 @@ class ItemController extends Controller
             $query->where('name', 'like', "%{$search}%");
         }
 
+        // 分类筛选
+        if ($request->filled('category')) {
+            $query->where('category_id', $request->category);
+        }
+
+        // 购买时间范围筛选
+        if ($request->filled('purchase_date_from')) {
+            $query->whereDate('purchase_date', '>=', $request->purchase_date_from);
+        }
+        if ($request->filled('purchase_date_to')) {
+            $query->whereDate('purchase_date', '<=', $request->purchase_date_to);
+        }
+
+        // 过期时间范围筛选
+        if ($request->filled('expiry_date_from')) {
+            $query->whereDate('expiry_date', '>=', $request->expiry_date_from);
+        }
+        if ($request->filled('expiry_date_to')) {
+            $query->whereDate('expiry_date', '<=', $request->expiry_date_to);
+        }
+
+        // 购买价格范围筛选
+        if ($request->filled('price_from')) {
+            $query->where('purchase_price', '>=', $request->price_from);
+        }
+        if ($request->filled('price_to')) {
+            $query->where('purchase_price', '<=', $request->price_to);
+        }
+
+        // 存放地点筛选
+        if ($request->filled('area') || $request->filled('room') || $request->filled('spot')) {
+            $query->whereHas('spot.room.area', function($q) use ($request) {
+                // 区域筛选
+                if ($request->filled('area')) {
+                    $q->where('areas.name', $request->area);
+                }
+                
+                // 房间筛选
+                if ($request->filled('room')) {
+                    $q->whereHas('rooms', function($q) use ($request) {
+                        $q->where('rooms.name', $request->room);
+                    });
+                }
+                
+                // 具体位置筛选
+                if ($request->filled('spot')) {
+                    $q->whereHas('rooms.spots', function($q) use ($request) {
+                        $q->where('spots.name', $request->spot);
+                    });
+                }
+            });
+        }
+
         $items = $query->latest()->paginate(10);
 
          // 计算购买时间差
@@ -56,7 +109,28 @@ class ItemController extends Controller
         // 保持搜索参数在分页链接中
         $items->appends($request->all());
         
-        return view('items.index', compact('items', 'categories'));
+        // 获取所有地点数据，用于筛选
+        $locations = Area::where('user_id', auth()->id())
+            ->with(['rooms.spots']) // 预加载关联数据
+            ->get()
+            ->map(function($area) {
+                return [
+                    'area' => $area->name,
+                    'rooms' => $area->rooms->map(function($room) {
+                        return [
+                            'name' => $room->name,
+                            'spots' => $room->spots->map(function($spot) {
+                                return [
+                                    'id' => $spot->id,
+                                    'name' => $spot->name
+                                ];
+                            })->values()->all()
+                        ];
+                    })->values()->all()
+                ];
+            })->values()->all();
+        
+        return view('items.index', compact('items', 'categories', 'locations'));
     }
 
     public function create()

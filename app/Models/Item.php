@@ -48,4 +48,9 @@ class Item extends Model
     {
         return $this->belongsTo(ItemCategory::class, 'category_id');
     }
+
+    public function spot()
+    {
+        return $this->belongsTo(Spot::class);
+    }
 } 

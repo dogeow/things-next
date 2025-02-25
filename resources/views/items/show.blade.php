@@ -1,18 +1,4 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex justify-between items-center">
-            <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-                {{ $item->name }}
-            </h2>
-            @can('update', $item)
-                <a href="{{ route('items.edit', $item) }}" 
-                   class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-                    编辑物品
-                </a>
-            @endcan
-        </div>
-    </x-slot>
-
     <div class="py-6">
         <div class="max-w-5xl mx-auto sm:px-4 lg:px-6">
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
