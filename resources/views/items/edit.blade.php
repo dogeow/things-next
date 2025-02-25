@@ -220,7 +220,7 @@
                         </div>
 
                         <div class="mt-4 flex justify-end space-x-3">
-                            <a href="{{ route('dashboard') }}" 
+                            <a href="{{ route('items.index') }}" 
                                 class="px-4 py-2 border rounded-md hover:bg-gray-50">
                                 取消
                             </a>

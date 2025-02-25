@@ -20,7 +20,9 @@ class ItemController extends Controller
 
     public function index(Request $request)
     {
-        $query = Item::with('user');
+        $categories = ItemCategory::where('user_id', auth()->id())->get();
+        
+        $query = Item::with(['user','images', 'category']);
         
         // 如果用户已登录，显示公开物品和自己的物品
         if (auth()->check()) {
@@ -40,11 +42,21 @@ class ItemController extends Controller
         }
 
         $items = $query->latest()->paginate(10);
+
+         // 计算购买时间差
+         $items->each(function($item) {
+            if ($item->created_at) {
+                // 使用Carbon::now()的实例来计算时间差，确保时间差是正确的
+                $item->created_at_diff = $item->created_at->diffForHumans();
+            } else {
+                $item->created_at_diff = '';
+            }
+        });
         
         // 保持搜索参数在分页链接中
         $items->appends($request->all());
         
-        return view('items.index', compact('items'));
+        return view('items.index', compact('items', 'categories'));
     }
 
     public function create()
@@ -221,12 +233,12 @@ class ItemController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'redirect' => route('dashboard'),
+                    'redirect' => route('items.index'),
                     'message' => '物品创建成功！'
                 ]);
             }
 
-            return redirect()->route('dashboard')
+            return redirect()->route('items.index')
                 ->with('success', '物品创建成功！');
 
         } catch (\Exception $e) {
@@ -384,7 +396,7 @@ class ItemController extends Controller
             }
 
             DB::commit();
-            return redirect()->route('dashboard')->with('success', '物品更新成功！');
+            return redirect()->route('items.index')->with('success', '物品更新成功！');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()
@@ -423,7 +435,7 @@ class ItemController extends Controller
     {
         $this->authorize('delete', $item);
         $item->delete();
-        return redirect()->route('dashboard')->with('success', '物品已删除！');
+        return redirect()->route('items.index')->with('success', '物品已删除！');
     }
 
     public function show(Item $item)
