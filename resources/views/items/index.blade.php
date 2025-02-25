@@ -91,7 +91,7 @@
                             <div>
                                 <input type="text" id="area_input" name="area" list="area-list" value="{{ request('area') }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入区域" autocomplete="off" onchange="document.getElementById('filterForm').submit()">
+                                    placeholder="选择或输入区域" autocomplete="off">
                                 <datalist id="area-list">
                                     @foreach($locations ?? [] as $location)
                                         <option value="{{ $location['area'] }}">
@@ -103,7 +103,7 @@
                             <div>
                                 <input type="text" id="room_input" name="room" list="room-list" value="{{ request('room') }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入房间" autocomplete="off" onchange="document.getElementById('filterForm').submit()">
+                                    placeholder="选择或输入房间" autocomplete="off">
                                 <datalist id="room-list">
                                     @foreach($locations ?? [] as $location)
                                         @foreach($location['rooms'] as $room)
@@ -117,7 +117,7 @@
                             <div>
                                 <input type="text" id="spot_input" name="spot" list="spot-list" value="{{ request('spot') }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入具体位置" autocomplete="off" onchange="document.getElementById('filterForm').submit()">
+                                    placeholder="选择或输入具体位置" autocomplete="off">
                                 <datalist id="spot-list">
                                     @foreach($locations ?? [] as $location)
                                         @foreach($location['rooms'] as $room)
@@ -368,7 +368,59 @@ function toggleFilters() {
 
 // 存放地点级联选择处理
 document.addEventListener('DOMContentLoaded', function() {
+    const areaInput = document.getElementById('area_input');
+    const roomInput = document.getElementById('room_input');
+    const spotInput = document.getElementById('spot_input');
+    
     // 调试输出
     console.log('位置数据:', locations);
+    
+    // 当区域输入变化时，过滤房间选项
+    areaInput.addEventListener('input', function() {
+        console.log('区域输入变化:', this.value);
+        
+        // 清空房间和位置输入
+        if (this.value !== areaInput.getAttribute('data-last-valid')) {
+            roomInput.value = '';
+            spotInput.value = '';
+        }
+        areaInput.setAttribute('data-last-valid', this.value);
+        
+        // 如果区域为空，不需要进一步处理
+        if (!this.value) return;
+        
+        // 查找匹配的区域数据
+        const area = locations.find(a => a.area === this.value);
+        if (area) {
+            console.log('找到区域数据:', area);
+        } else {
+            console.log('未找到区域数据');
+        }
+    });
+    
+    // 当房间输入变化时，过滤具体位置选项
+    roomInput.addEventListener('input', function() {
+        console.log('房间输入变化:', this.value);
+        
+        // 清空位置输入
+        if (this.value !== roomInput.getAttribute('data-last-valid')) {
+            spotInput.value = '';
+        }
+        roomInput.setAttribute('data-last-valid', this.value);
+        
+        // 如果区域或房间为空，不需要进一步处理
+        if (!areaInput.value || !this.value) return;
+        
+        // 查找匹配的房间数据
+        const area = locations.find(a => a.area === areaInput.value);
+        if (area) {
+            const room = area.rooms.find(r => r.name === this.value);
+            if (room) {
+                console.log('找到房间数据:', room);
+            } else {
+                console.log('未找到房间数据');
+            }
+        }
+    });
 });
 </script>
