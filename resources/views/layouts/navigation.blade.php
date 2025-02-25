@@ -36,20 +36,35 @@
             <div class="hidden sm:flex sm:items-center sm:ml-6">
                 <!-- 添加搜索框 -->
                 <div class="relative mx-4">
-                    <form action="{{ route('items.index') }}" method="GET" class="flex items-center">
-                        <input type="text" 
-                               name="search" 
-                               placeholder="搜索物品..." 
-                               value="{{ request('search') }}"
-                               class="rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                               onkeypress="if(event.keyCode == 13) { this.form.submit(); return false; }">
-                        <button type="submit" 
-                                onclick="this.form.submit(); return false;"
-                                class="ml-2 inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-gray-500 bg-white hover:text-gray-700 focus:outline-none transition ease-in-out duration-150">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </button>
+                    <form action="{{ route('items.index') }}" method="GET">
+                        <div class="relative">
+                            <input type="text" 
+                                   id="searchInput"
+                                   name="search" 
+                                   placeholder="搜索物品..." 
+                                   value="{{ request('search') }}"
+                                   class="w-full rounded-md shadow-sm border-gray-300 focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50 pr-16"
+                                   onkeypress="if(event.keyCode == 13) { this.form.submit(); return false; }">
+                            
+                            <!-- X 按钮 (仅在有输入时显示) -->
+                            <button type="button" 
+                                    id="clearSearchBtn"
+                                    onclick="clearSearch()"
+                                    class="absolute right-8 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                    style="{{ request('search') ? '' : 'display: none;' }}">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                            
+                            <!-- 搜索按钮 -->
+                            <button type="submit" 
+                                    class="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </form>
                 </div>
 
@@ -161,3 +176,22 @@
         </div>
     </div>
 </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        
+        // 监听输入变化
+        searchInput.addEventListener('input', function() {
+            clearSearchBtn.style.display = this.value.length > 0 ? 'block' : 'none';
+        });
+    });
+    
+    function clearSearch() {
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = '';
+        document.getElementById('clearSearchBtn').style.display = 'none';
+        searchInput.focus();
+    }
+</script>

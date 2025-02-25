@@ -70,7 +70,7 @@
                             </div>
                         @empty
                             <div class="md:col-span-2 lg:col-span-3 text-center py-8 text-gray-500">
-                                还没有添加任何物品
+                                没有找到任何物品
                             </div>
                         @endforelse
                     </div>
