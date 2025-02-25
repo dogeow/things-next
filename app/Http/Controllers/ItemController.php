@@ -130,6 +130,9 @@ class ItemController extends Controller
                 ];
             })->values()->all();
         
+        // 添加调试日志
+        \Log::info('Index 方法中的 locations 数据:', ['locations' => $locations]);
+        
         return view('items.index', compact('items', 'categories', 'locations'));
     }
 

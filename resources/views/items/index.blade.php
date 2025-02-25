@@ -25,7 +25,7 @@
             
             <!-- 筛选表单 -->
             <div id="filterPanel" class="mb-6 bg-white p-4 rounded-lg shadow hidden">
-                <form action="{{ route('items.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <form action="{{ route('items.index') }}" method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="filterForm">
                     <!-- 保留搜索参数 -->
                     @if(request()->has('search'))
                         <input type="hidden" name="search" value="{{ request('search') }}">
@@ -34,7 +34,7 @@
                     <!-- 分类筛选 -->
                     <div>
                         <label for="category_filter" class="block text-sm font-medium text-gray-700 mb-1">分类</label>
-                        <select name="category" id="category_filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <select name="category" id="category_filter" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" onchange="document.getElementById('filterForm').submit()">
                             <option value="">所有分类</option>
                             @foreach($categories as $category)
                                 <option value="{{ $category->id }}" {{ request('category') == $category->id ? 'selected' : '' }}>
@@ -49,9 +49,11 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">购买时间范围</label>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="date" name="purchase_date_from" value="{{ request('purchase_date_from') }}" 
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="从">
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="从" onchange="document.getElementById('filterForm').submit()">
                             <input type="date" name="purchase_date_to" value="{{ request('purchase_date_to') }}"
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="至">
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="至" onchange="document.getElementById('filterForm').submit()">
                         </div>
                     </div>
                     
@@ -60,9 +62,11 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">过期时间范围</label>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="date" name="expiry_date_from" value="{{ request('expiry_date_from') }}" 
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="从">
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="从" onchange="document.getElementById('filterForm').submit()">
                             <input type="date" name="expiry_date_to" value="{{ request('expiry_date_to') }}"
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="至">
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="至" onchange="document.getElementById('filterForm').submit()">
                         </div>
                     </div>
                     
@@ -71,9 +75,11 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">购买价格范围</label>
                         <div class="grid grid-cols-2 gap-2">
                             <input type="number" name="price_from" value="{{ request('price_from') }}" min="0" step="0.01"
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="最低价">
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="最低价" onchange="document.getElementById('filterForm').submit()">
                             <input type="number" name="price_to" value="{{ request('price_to') }}" min="0" step="0.01"
-                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="最高价">
+                                class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="最高价" onchange="document.getElementById('filterForm').submit()">
                         </div>
                     </div>
                     
@@ -85,7 +91,7 @@
                             <div>
                                 <input type="text" id="area_input" name="area" list="area-list" value="{{ request('area') }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入区域" autocomplete="off">
+                                    placeholder="选择或输入区域" autocomplete="off" onchange="document.getElementById('filterForm').submit()">
                                 <datalist id="area-list">
                                     @foreach($locations ?? [] as $location)
                                         <option value="{{ $location['area'] }}">
@@ -97,8 +103,13 @@
                             <div>
                                 <input type="text" id="room_input" name="room" list="room-list" value="{{ request('room') }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入房间" autocomplete="off">
+                                    placeholder="选择或输入房间" autocomplete="off" onchange="document.getElementById('filterForm').submit()">
                                 <datalist id="room-list">
+                                    @foreach($locations ?? [] as $location)
+                                        @foreach($location['rooms'] as $room)
+                                            <option value="{{ $room['name'] }}" data-area="{{ $location['area'] }}">
+                                        @endforeach
+                                    @endforeach
                                 </datalist>
                             </div>
 
@@ -106,8 +117,15 @@
                             <div>
                                 <input type="text" id="spot_input" name="spot" list="spot-list" value="{{ request('spot') }}"
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入具体位置" autocomplete="off">
+                                    placeholder="选择或输入具体位置" autocomplete="off" onchange="document.getElementById('filterForm').submit()">
                                 <datalist id="spot-list">
+                                    @foreach($locations ?? [] as $location)
+                                        @foreach($location['rooms'] as $room)
+                                            @foreach($room['spots'] as $spot)
+                                                <option value="{{ $spot['name'] }}" data-area="{{ $location['area'] }}" data-room="{{ $room['name'] }}" data-id="{{ $spot['id'] }}">
+                                            @endforeach
+                                        @endforeach
+                                    @endforeach
                                 </datalist>
                             </div>
                         </div>
@@ -199,6 +217,9 @@ let fileCount = 0;
 
 // 将位置数据传递给前端JavaScript
 const locations = @json($locations ?? []);
+
+// 调试输出
+console.log('位置数据:', locations);
 
 function handleImageSelect(input) {
     const files = input.files;
@@ -347,52 +368,7 @@ function toggleFilters() {
 
 // 存放地点级联选择处理
 document.addEventListener('DOMContentLoaded', function() {
-    const areaInput = document.getElementById('area_input');
-    const roomInput = document.getElementById('room_input');
-    const spotInput = document.getElementById('spot_input');
-    const roomList = document.getElementById('room-list');
-    const spotList = document.getElementById('spot-list');
-    
-    // 如果有地点数据，初始化级联选择
-    if (typeof locations !== 'undefined') {
-        areaInput.addEventListener('input', function() {
-            roomList.innerHTML = '';
-            spotList.innerHTML = '';
-            roomInput.value = '';
-            spotInput.value = '';
-            
-            const selectedArea = this.value;
-            const areaData = locations.find(location => location.area === selectedArea);
-            
-            if (areaData) {
-                areaData.rooms.forEach(room => {
-                    const option = document.createElement('option');
-                    option.value = room.name;
-                    roomList.appendChild(option);
-                });
-            }
-        });
-        
-        roomInput.addEventListener('input', function() {
-            spotList.innerHTML = '';
-            spotInput.value = '';
-            
-            const selectedArea = areaInput.value;
-            const selectedRoom = this.value;
-            const areaData = locations.find(location => location.area === selectedArea);
-            
-            if (areaData) {
-                const roomData = areaData.rooms.find(room => room.name === selectedRoom);
-                if (roomData) {
-                    roomData.spots.forEach(spot => {
-                        const option = document.createElement('option');
-                        option.value = spot.name;
-                        option.dataset.id = spot.id;
-                        spotList.appendChild(option);
-                    });
-                }
-            }
-        });
-    }
+    // 调试输出
+    console.log('位置数据:', locations);
 });
 </script>
