@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Intervention\Image\ImageManager;
 use App\Models\Area;
 use App\Models\Room;
 use App\Models\Spot;
@@ -49,7 +50,29 @@ class ItemController extends Controller
     public function create()
     {
         $categories = ItemCategory::where('user_id', auth()->id())->get();
-        return view('items.create', compact('categories'));
+
+        // 获取所有地点数据，包括完整的层级结构
+        $locations = Area::where('user_id', auth()->id())
+            ->with(['rooms.spots']) // 预加载关联数据
+            ->get()
+            ->map(function($area) {
+                return [
+                    'area' => $area->name,
+                    'rooms' => $area->rooms->map(function($room) {
+                        return [
+                            'name' => $room->name,
+                            'spots' => $room->spots->map(function($spot) {
+                                return [
+                                    'id' => $spot->id,
+                                    'name' => $spot->name
+                                ];
+                            })->values()->all()
+                        ];
+                    })->values()->all()
+                ];
+            })->values()->all();
+
+        return view('items.create', compact('categories', 'locations'));
     }
 
     public function store(Request $request)
@@ -140,49 +163,55 @@ class ItemController extends Controller
                 'is_public' => $request->boolean('is_public', false)
             ]);
 
-            \Log::info('物品创建成功', ['item_id' => $item->id]);
-
             if ($request->hasFile('images')) {
                 $images = $request->file('images');
                 $primaryIndex = (int) $request->input('primary_image', 0);
-
-                \Log::info('处理图片数组', [
-                    'images_count' => count($images),
-                    'primary_index' => $primaryIndex
-                ]);
+                
+                // 创建图片管理器实例
+                $manager = new ImageManager(
+                    new \Intervention\Image\Drivers\Gd\Driver()
+                );
 
                 foreach ($images as $index => $image) {
-                    // 生成唯一的文件名
-                    $filename = uniqid('item_') . '.' . $image->getClientOriginalExtension();
+                    // 生成唯一文件名(不带扩展名)
+                    $baseFilename = uniqid('item_');
+                    $extension = $image->getClientOriginalExtension();
                     
-                    // 存储图片
-                    $path = $image->storeAs('items', $filename, 'public');
+                    // 原始图片文件名
+                    $originalFilename = $baseFilename . '_original.' . $extension;
+                    // 缩略图文件名
+                    $thumbnailFilename = $baseFilename . '_thumb.' . $extension;
                     
-                    \Log::info('准备保存图片记录', [
-                        'index' => $index,
-                        'path' => $path,
-                        'is_primary' => $index == $primaryIndex,
-                        'item_id' => $item->id
-                    ]);
+                    // 保存原始图片
+                    $originalPath = $image->storeAs('items', $originalFilename, 'public');
+                    
+                    // 使用 Intervention Image 创建缩略图
+                    $interventionImage = $manager->read($image);
+                    // 按照原始比例缩放，宽度设为300
+                    $interventionImage->scale(width: 300);
+                    
+                    // 保存缩略图
+                    $thumbnailPath = 'items/' . $thumbnailFilename;
+                    Storage::disk('public')->put(
+                        $thumbnailPath, 
+                        $interventionImage->toJpg()->toString()
+                    );
 
                     // 验证文件是否成功保存
-                    if (!Storage::disk('public')->exists($path)) {
-                        throw new \Exception("文件 {$path} 保存失败");
+                    if (!Storage::disk('public')->exists($originalPath) || 
+                        !Storage::disk('public')->exists($thumbnailPath)) {
+                        throw new \Exception("图片保存失败");
                     }
 
-                    // 直接使用 DB 查询构建器来创建记录，以便捕获任何SQL错误
-                    $imageRecord = \DB::table('item_images')->insert([
+                    // 创建图片记录
+                    \DB::table('item_images')->insert([
                         'item_id' => $item->id,
-                        'path' => $path,
+                        'path' => $originalPath,
+                        'thumbnail_path' => $thumbnailPath,
                         'is_primary' => $index == $primaryIndex,
                         'sort_order' => $index,
                         'created_at' => now(),
                         'updated_at' => now()
-                    ]);
-
-                    \Log::info('图片记录创建结果', [
-                        'success' => $imageRecord,
-                        'path' => $path
                     ]);
                 }
             }
@@ -304,44 +333,52 @@ class ItemController extends Controller
             if ($request->hasFile('images')) {
                 $images = $request->file('images');
                 $primaryIndex = (int) $request->input('primary_image', 0);
-
-                \Log::info('处理图片数组', [
-                    'images_count' => count($images),
-                    'primary_index' => $primaryIndex
-                ]);
+                
+                // 创建图片管理器实例
+                $manager = new ImageManager(
+                    new \Intervention\Image\Drivers\Gd\Driver()
+                );
 
                 foreach ($images as $index => $image) {
-                    // 生成唯一的文件名
-                    $filename = uniqid('item_') . '.' . $image->getClientOriginalExtension();
+                    // 生成唯一文件名(不带扩展名)
+                    $baseFilename = uniqid('item_');
+                    $extension = $image->getClientOriginalExtension();
                     
-                    // 存储图片
-                    $path = $image->storeAs('items', $filename, 'public');
+                    // 原始图片文件名
+                    $originalFilename = $baseFilename . '_original.' . $extension;
+                    // 缩略图文件名
+                    $thumbnailFilename = $baseFilename . '_thumb.' . $extension;
                     
-                    \Log::info('准备保存图片记录', [
-                        'index' => $index,
-                        'path' => $path,
-                        'is_primary' => $index == $primaryIndex,
-                        'item_id' => $item->id
-                    ]);
+                    // 保存原始图片
+                    $originalPath = $image->storeAs('items', $originalFilename, 'public');
+                    
+                    // 使用 Intervention Image 创建缩略图
+                    $interventionImage = $manager->read($image);
+                    // 按照原始比例缩放，宽度设为300
+                    $interventionImage->scale(width: 300);
+                    
+                    // 保存缩略图
+                    $thumbnailPath = 'items/' . $thumbnailFilename;
+                    Storage::disk('public')->put(
+                        $thumbnailPath, 
+                        $interventionImage->toJpg()->toString()
+                    );
 
                     // 验证文件是否成功保存
-                    if (!Storage::disk('public')->exists($path)) {
-                        throw new \Exception("文件 {$path} 保存失败");
+                    if (!Storage::disk('public')->exists($originalPath) || 
+                        !Storage::disk('public')->exists($thumbnailPath)) {
+                        throw new \Exception("图片保存失败");
                     }
 
-                    // 直接使用 DB 查询构建器来创建记录，以便捕获任何SQL错误
-                    $imageRecord = \DB::table('item_images')->insert([
+                    // 创建图片记录
+                    \DB::table('item_images')->insert([
                         'item_id' => $item->id,
-                        'path' => $path,
+                        'path' => $originalPath,
+                        'thumbnail_path' => $thumbnailPath,
                         'is_primary' => $index == $primaryIndex,
                         'sort_order' => $index,
                         'created_at' => now(),
                         'updated_at' => now()
-                    ]);
-
-                    \Log::info('图片记录创建结果', [
-                        'success' => $imageRecord,
-                        'path' => $path
                     ]);
                 }
             }
@@ -406,8 +443,9 @@ class ItemController extends Controller
             return back()->with('error', '不能删除主图，请先设置其他图片为主图');
         }
 
-        // 删除存储中的文件
+        // 删除原始图片和缩略图
         Storage::disk('public')->delete($image->path);
+        Storage::disk('public')->delete($image->thumbnail_path);
 
         // 删除数据库记录
         $image->delete();

@@ -19,33 +19,6 @@ class DashboardController extends Controller
             ->with(['images', 'category'])
             ->latest()
             ->paginate(9);
-            
-        // 获取所有地点数据，包括完整的层级结构
-        $locations = Area::where('user_id', auth()->id())
-            ->with(['rooms.spots']) // 预加载关联数据
-            ->get()
-            ->map(function($area) {
-                return [
-                    'area' => $area->name,
-                    'rooms' => $area->rooms->map(function($room) {
-                        return [
-                            'name' => $room->name,
-                            'spots' => $room->spots->map(function($spot) {
-                                return [
-                                    'id' => $spot->id,
-                                    'name' => $spot->name
-                                ];
-                            })->values()->all()
-                        ];
-                    })->values()->all()
-                ];
-            })->values()->all();
-
-        // 添加调试日志
-        \Log::info('Locations data:', [
-            'locations' => $locations,
-            'count' => count($locations)
-        ]);
 
         // 计算购买时间差
         $items->each(function($item) {
@@ -57,6 +30,6 @@ class DashboardController extends Controller
             }
         });
 
-        return view('dashboard', compact('items', 'categories', 'locations'));
+        return view('dashboard', compact('items', 'categories'));
     }
 } 
