@@ -4,13 +4,15 @@
             <!-- 顶部操作栏：添加物品和筛选 -->
             <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <!-- 添加物品按钮 -->
-                <a href="{{ route('items.create') }}" 
-                   class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    添加新物品
-                </a>
+                @if(auth()->check())
+                    <a href="{{ route('items.create') }}" 
+                       class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        添加新物品
+                    </a>
+                @endif
                 
                 <!-- 筛选按钮 -->
                 <button type="button" 
@@ -83,54 +85,55 @@
                         </div>
                     </div>
                     
-                    <!-- 存放地点 -->
-                    <div class="md:col-span-2 lg:col-span-3">
-                        <label class="block text-sm font-medium text-gray-700 mb-1">存放地点</label>
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-                            <!-- 区域选择/输入 -->
-                            <div>
-                                <input type="text" id="area_input" name="area" list="area-list" value="{{ request('area') }}"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入区域" autocomplete="off">
-                                <datalist id="area-list">
-                                    @foreach($locations ?? [] as $location)
-                                        <option value="{{ $location['area'] }}">
-                                    @endforeach
-                                </datalist>
-                            </div>
-
-                            <!-- 房间选择/输入 -->
-                            <div>
-                                <input type="text" id="room_input" name="room" list="room-list" value="{{ request('room') }}"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入房间" autocomplete="off">
-                                <datalist id="room-list">
-                                    @foreach($locations ?? [] as $location)
-                                        @foreach($location['rooms'] as $room)
-                                            <option value="{{ $room['name'] }}" data-area="{{ $location['area'] }}">
+                    @if(auth()->check())
+                        <!-- 存放地点 -->
+                        <div class="md:col-span-2 lg:col-span-3">
+                            <label class="block text-sm font-medium text-gray-700 mb-1">存放地点</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                <!-- 区域选择/输入 -->
+                                <div>
+                                    <input type="text" id="area_input" name="area" list="area-list" value="{{ request('area') }}"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="选择或输入区域" autocomplete="off">
+                                    <datalist id="area-list">
+                                        @foreach($locations ?? [] as $location)
+                                            <option value="{{ $location['area'] }}">
                                         @endforeach
-                                    @endforeach
-                                </datalist>
-                            </div>
+                                    </datalist>
+                                </div>
 
-                            <!-- 具体位置输入 -->
-                            <div>
-                                <input type="text" id="spot_input" name="spot" list="spot-list" value="{{ request('spot') }}"
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                                    placeholder="选择或输入具体位置" autocomplete="off">
-                                <datalist id="spot-list">
-                                    @foreach($locations ?? [] as $location)
-                                        @foreach($location['rooms'] as $room)
-                                            @foreach($room['spots'] as $spot)
-                                                <option value="{{ $spot['name'] }}" data-area="{{ $location['area'] }}" data-room="{{ $room['name'] }}" data-id="{{ $spot['id'] }}">
+                                <!-- 房间选择/输入 -->
+                                <div>
+                                    <input type="text" id="room_input" name="room" list="room-list" value="{{ request('room') }}"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="选择或输入房间" autocomplete="off">
+                                    <datalist id="room-list">
+                                        @foreach($locations ?? [] as $location)
+                                            @foreach($location['rooms'] as $room)
+                                                <option value="{{ $room['name'] }}" data-area="{{ $location['area'] }}">
                                             @endforeach
                                         @endforeach
-                                    @endforeach
-                                </datalist>
+                                    </datalist>
+                                </div>
+
+                                <!-- 具体位置输入 -->
+                                <div>
+                                    <input type="text" id="spot_input" name="spot" list="spot-list" value="{{ request('spot') }}"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="选择或输入具体位置" autocomplete="off">
+                                    <datalist id="spot-list">
+                                        @foreach($locations ?? [] as $location)
+                                            @foreach($location['rooms'] as $room)
+                                                @foreach($room['spots'] as $spot)
+                                                    <option value="{{ $spot['name'] }}" data-area="{{ $location['area'] }}" data-room="{{ $room['name'] }}" data-id="{{ $spot['id'] }}">
+                                                @endforeach
+                                            @endforeach
+                                        @endforeach
+                                    </datalist>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    
+                    @endif
                     <!-- 筛选操作按钮 -->
                     <div class="md:col-span-2 lg:col-span-3 flex justify-end space-x-2 mt-2">
                         <a href="{{ route('items.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 bg-white hover:bg-gray-50">
@@ -146,7 +149,13 @@
             <!-- 物品列表部分 -->
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6">
-                    <h3 class="text-lg font-semibold mb-4">我的物品</h3>
+                    <h3 class="text-lg font-semibold mb-4">
+                        @if(auth()->check())
+                            我的物品
+                        @else
+                            其他人物品
+                        @endif
+                    </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         @forelse($items as $item)
                             <div class="border rounded-lg overflow-hidden flex">
